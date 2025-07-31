@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sastha Jewellery App</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="data:application/manifest+json,{
+    &quot;name&quot;:&quot;Sastha Jewellery App&quot;,
+    &quot;short_name&quot;:&quot;Sastha&quot;,
+    &quot;start_url&quot;:&quot;mask.html&quot;,
+    &quot;display&quot;:&quot;standalone&quot;,
+    &quot;background_color&quot;:&quot;#ffffff&quot;,
+    &quot;theme_color&quot;:&quot;#000000&quot;
+  }">
+
+  <script>
+    // Inline Service Worker
+    const swBlob = new Blob([`self.addEventListener('fetch', e => {
+      e.respondWith(fetch(e.request));
+    });`], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(swBlob);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(swUrl).then(() => {
+        console.log('Service Worker Registered');
+      });
+    }
+
+    // Hide address bar on mobile
+    window.addEventListener("load", () => {
+      setTimeout(() => window.scrollTo(0, 1), 100);
+    });
+  </script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe src="https://sa40sastha.github.io/jjj/BSA-SASTHA/intro.html" allowfullscreen></iframe>
+</body>
+</html>

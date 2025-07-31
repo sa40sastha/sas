@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gstr1 Sales Report</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fff0f5;
+      color: #333;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #d63384;
+    }
+    .filters {
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    label {
+      font-weight: bold;
+      color: #d63384;
+    }
+    input, select, button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #d63384;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #c2186a;
+    }
+    .loading {
+      text-align: center;
+      color: #d63384;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 0 10px rgba(214, 51, 132, 0.2);
+      font-size: 14px;
+    }
+    th, td {
+      padding: 6px;
+      border: 1px solid #f7c5d9;
+      text-align: left;
+      max-width: 200px;
+      word-wrap: break-word;
+    }
+    th {
+      background-color: #ffd6e8;
+    }
+    tr:hover {
+      background-color: #fff0f8;
+    }
+    .hidden {
+      display: none;
+    }
+    tfoot td {
+      font-weight: bold;
+      background-color: #ffe3f2;
+    }
+    .print-btn {
+      float: right;
+    }
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+      body {
+        background: white;
+        color: black;
+        font-size: 12px;
+      }
+      .filters, .print-btn, .loading {
+        display: none !important;
+      }
+      table {
+        width: 100%;
+        box-shadow: none;
+        font-size: 12px;
+      }
+      th, td {
+        padding: 4px;
+        border: 1px solid #999;
+      }
+      .hidden {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+      ← Back
+  </button>
+
+  <h2>Gstr 1 Sales Report</h2>
+
+  <div class="filters">
+    <label for="dateInput">Date:</label>
+    <input type="date" id="dateInput" />
+    <label for="monthInput">Month:</label>
+    <select id="monthInput">
+      <option value="">--All--</option>
+      <option value="Jan">January</option>
+      <option value="Feb">February</option>
+      <option value="Mar">March</option>
+      <option value="Apr">April</option>
+      <option value="May">May</option>
+      <option value="Jun">June</option>
+      <option value="Jul">July</option>
+      <option value="Aug">August</option>
+      <option value="Sep">September</option>
+      <option value="Oct">October</option>
+      <option value="Nov">November</option>
+      <option value="Dec">December</option>
+    </select>
+    <label for="globalInput">Search:</label>
+    <input type="text" id="globalInput" placeholder="Search keyword..." />
+    <button onclick="filterData()">Search</button>
+    <button class="print-btn" onclick="window.print()">Print PDF</button>
+  </div>
+
+  <div class="loading" id="loadingMessage">Loading... Please wait.</div>
+
+  <table id="gstrTable">
+    <thead></thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+  </table>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbw1VD5-KYTYV6eECAls7g9ML0zYjyMuCW74uRSrTVP-7j_-DSY2ArQ7DR6VR0X2Ve7O/exec";
+    let rawData = [];
+    let hiddenColIndexes = [];
+    const excludedSummaryCols = ["rate", "wastage_percentage", "hsn", "huid"];
+
+    function formatDate(dateStr) {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      const day = d.getDate().toString().padStart(2, '0');
+      return `${day}-${months[d.getMonth()]}-${d.getFullYear()}`;
+    }
+
+    function renderTable(data) {
+      const table = document.getElementById("gstrTable");
+      const thead = table.querySelector("thead");
+      const tbody = table.querySelector("tbody");
+      const tfoot = table.querySelector("tfoot");
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+      tfoot.innerHTML = "";
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="100%">No records found</td></tr>`;
+        return;
+      }
+
+      const headers = [...data[0]];
+      hiddenColIndexes = [];
+
+      const receivedIdx = headers.findIndex(h => h.toLowerCase().includes("received"));
+      const oldIdx = headers.findIndex(h => h.toLowerCase().includes("old"));
+      const typeIdx = headers.findIndex(h => h.toLowerCase() === "type");
+      const advanceIdx = headers.findIndex(h => h.toLowerCase().includes("advance"));
+      const dateCol = headers.findIndex(h => h.toLowerCase() === "date");
+      const timeSlapIdx = headers.findIndex(h => h.toLowerCase() === "time_slap");
+      const billIdx = headers.findIndex(h => h.toLowerCase().includes("bill"));
+      const mobileIdx = headers.findIndex(h => h.toLowerCase().includes("mobile"));
+
+      if (oldIdx !== -1 && receivedIdx !== -1 && oldIdx > receivedIdx) {
+        const [col] = headers.splice(oldIdx, 1);
+        headers.splice(receivedIdx, 0, col);
+        data.slice(1).forEach(row => {
+          const [val] = row.splice(oldIdx, 1);
+          row.splice(receivedIdx, 0, val);
+        });
+      }
+
+      if (dateCol !== -1) hiddenColIndexes.push(dateCol);
+
+      const headerRow = document.createElement("tr");
+      headers.forEach((header, i) => {
+        const th = document.createElement("th");
+        th.textContent = header;
+        if (hiddenColIndexes.includes(i)) th.classList.add("hidden");
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+
+      const totals = new Array(headers.length).fill(0);
+      const seenBills = new Set();
+
+      data.slice(1).forEach(row => {
+        const tr = document.createElement("tr");
+        const currentBillNo = row[billIdx];
+        const isFirstOfBill = !seenBills.has(currentBillNo);
+        if (isFirstOfBill) seenBills.add(currentBillNo);
+
+        row.forEach((cell, i) => {
+          const td = document.createElement("td");
+          const lower = headers[i].toLowerCase();
+
+          if (i === advanceIdx && typeIdx !== -1) {
+            const typeValue = row[typeIdx]?.toString().trim().toLowerCase();
+            if (typeValue !== "advance") {
+              td.textContent = "";
+              tr.appendChild(td);
+              return;
+            }
+          }
+
+          const showOnceFields = [
+            "subtotal", "gst", "grand_total",
+            "recevied_amount", "balance", "type", "advance", "old"
+          ];
+          const isShowOnce = showOnceFields.some(key => lower.includes(key));
+          if (!isFirstOfBill && isShowOnce) {
+            td.textContent = "";
+          } else {
+            if (hiddenColIndexes.includes(i)) {
+              td.classList.add("hidden");
+            } else if (i === timeSlapIdx) {
+              td.textContent = formatDate(cell);
+            } else if (!isNaN(cell) && cell !== "" && typeof cell !== "object") {
+              const num = parseFloat(cell);
+              if (!excludedSummaryCols.includes(lower) && i !== mobileIdx) {
+                totals[i] += num;
+              }
+              td.textContent = num.toFixed(2);
+            } else {
+              td.textContent = cell;
+            }
+          }
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      const footerRow = document.createElement("tr");
+      headers.forEach((header, i) => {
+        const td = document.createElement("td");
+        if (hiddenColIndexes.includes(i)) {
+          td.classList.add("hidden");
+        } else if (!isNaN(totals[i]) && totals[i] !== 0 && !excludedSummaryCols.includes(header.toLowerCase()) && i !== mobileIdx) {
+          td.textContent = totals[i].toFixed(2);
+        } else {
+          td.textContent = i === 0 ? "Total" : "";
+        }
+        footerRow.appendChild(td);
+      });
+      tfoot.appendChild(footerRow);
+    }
+
+    function goBack() {
+      window.location.href = "main.html";
+    }
+
+    function filterData() {
+      const dateVal = document.getElementById("dateInput").value;
+      const globalVal = document.getElementById("globalInput").value.toLowerCase();
+      const monthVal = document.getElementById("monthInput").value;
+      const formattedDate = dateVal ? formatDate(dateVal) : "";
+
+      const timeSlapIdx = rawData[0].findIndex(h => h.toLowerCase() === "time_slap");
+
+      const filtered = rawData.filter((row, idx) => {
+        if (idx === 0) return true;
+        const rowText = row.map(cell => String(cell).toLowerCase()).join(" ");
+        const dateCell = formatDate(row[timeSlapIdx]).toLowerCase();
+
+        const matchDate = !formattedDate || dateCell === formattedDate.toLowerCase();
+        const matchMonth = !monthVal || dateCell.includes(monthVal.toLowerCase());
+        const matchText = !globalVal || rowText.includes(globalVal);
+
+        return matchDate && matchMonth && matchText;
+      });
+
+      renderTable(filtered);
+    }
+
+    fetch(scriptURL)
+      .then(res => res.json())
+      .then(data => {
+        rawData = data;
+        document.getElementById("loadingMessage").style.display = "none";
+        renderTable(data);
+      })
+      .catch(err => {
+        document.getElementById("loadingMessage").textContent = "Error loading data.";
+        console.error(err);
+      });
+  </script>
+</body>
+</html>

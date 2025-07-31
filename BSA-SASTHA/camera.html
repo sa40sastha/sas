@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Camera Capture & Print</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+    }
+
+    #camera {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    #capturedImage {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 150px;
+      border: 2px solid #000;
+    }
+
+    @media print {
+      body {
+        margin: 0;
+      }
+      #controls {
+        display: none;
+      }
+      #capturedImage {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="controls">
+    <input type="file" accept="image/*" capture="environment" id="cameraInput">
+    <br><br>
+    <button onclick="window.print()">Print A4</button>
+  </div>
+
+  <img id="capturedImage" style="display:none;" />
+
+  <script>
+    const cameraInput = document.getElementById('cameraInput');
+    const capturedImage = document.getElementById('capturedImage');
+
+    cameraInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          capturedImage.src = e.target.result;
+          capturedImage.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
+
+</body>
+</html>

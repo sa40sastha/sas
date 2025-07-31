@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sastha Jewellery Software</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+
+    .header {
+      margin-top: 20px;
+      font-size: 26px;
+      font-weight: bold;
+      color: #e91e63;
+      animation: slideIn 1s ease-out forwards;
+      opacity: 0;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(-30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .content {
+      text-align: center;
+      font-size: 24px;
+      margin-top: 50px;
+      transition: 0.3s ease;
+    }
+
+    .card-container {
+      display: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+      padding: 0 20px;
+    }
+
+    .card {
+      text-decoration: none;
+      background: #ffe4ec;
+      padding: 15px;
+      width: 140px;
+      text-align: center;
+      border-radius: 12px;
+      color: #e91e63;
+      font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .card i {
+      font-size: 24px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .nav-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      padding: 12px 20px;
+      border-radius: 30px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+
+    ul.nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      list-style: none;
+      position: relative;
+    }
+
+    ul.nav li {
+      width: 60px;
+      height: 60px;
+      margin: 0 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    ul.nav li a {
+      text-decoration: none;
+      color: #aaa;
+      font-size: 20px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    ul.nav li.active a {
+      background: #fff;
+      color: #e91e63;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+
+    .indicator {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 60px;
+      height: 60px;
+      background: #e91e63;
+      border-radius: 50%;
+      transform: translateY(-50%);
+      transition: 0.3s ease;
+      z-index: 0;
+    }
+
+    ul.nav li:nth-child(1).active ~ .indicator {
+      transform: translateX(0px) translateY(-50%);
+    }
+    ul.nav li:nth-child(2).active ~ .indicator {
+      transform: translateX(80px) translateY(-50%);
+    }
+    ul.nav li:nth-child(3).active ~ .indicator {
+      transform: translateX(160px) translateY(-50%);
+    }
+    ul.nav li:nth-child(4).active ~ .indicator {
+      transform: translateX(240px) translateY(-50%);
+    }
+    ul.nav li:nth-child(5).active ~ .indicator {
+      transform: translateX(320px) translateY(-50%);
+    }
+
+    @media screen and (max-width: 500px) {
+      ul.nav li {
+        width: 50px;
+        height: 50px;
+        margin: 0 6px;
+      }
+
+      .indicator {
+        width: 50px;
+        height: 50px;
+      }
+
+      ul.nav li:nth-child(2).active ~ .indicator { transform: translateX(62px) translateY(-50%); }
+      ul.nav li:nth-child(3).active ~ .indicator { transform: translateX(124px) translateY(-50%); }
+      ul.nav li:nth-child(4).active ~ .indicator { transform: translateX(186px) translateY(-50%); }
+      ul.nav li:nth-child(5).active ~ .indicator { transform: translateX(248px) translateY(-50%); }
+
+      .content { font-size: 20px; }
+    }
+  
+  
+  
+  .sastha-footer {
+  color: #e91e63; /* pink color */
+  font-size: 12px;
+  animation: blink 1s infinite;
+  text-align: center;
+  font-weight: bold;
+  padding: 10px 0;
+}
+
+/* Blinking animation */
+@keyframes blink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+  
+  </style>
+</head>
+<body>
+
+  <div class="header">JEWEL - BSA </div>
+
+  <div class="content" id="displayText">Main Master</div>
+
+  <!-- Content per icon -->
+  <div id="cardSections">
+
+      <div id="profileCards" class="card-container">
+ 
+        
+        
+            
+    <a href="denomination.html" class="card">
+      <i class="fas fa-file-alt"></i>
+      <span>Denomination</span>
+    </a>
+        
+        
+          <a href="Billing.html" class="card">
+      <i class="fas fa-file-invoice"></i>
+      <span>Billing</span>
+    </a>
+    
+    
+        <a href="buy_back.html" class="card">
+      <i class="fas fa-file-invoice"></i>
+      <span>Buy Back Amount</span>
+    </a>
+      
+              <a href="dup_print.html" class="card">
+    <i class="fas fa-cart-plus"></i>
+      <span>Bill Dup Print</span>
+    </a>
+
+      
+      
+      
+    </div>
+    <div id="homeCards" class="card-container" style="display: flex;">
+  
+      
+      
+<a href="info.html" class="card">
+      <i class="fas fa-info-circle"></i>
+      <span>Software Info</span>
+    </a>
+    
+
+ <a href="purchase.html" class="card">
+      <i class="fas fa-cart-plus"></i>
+      <span>New Purchase</span>
+    </a>
+    
+      <a href="stock_entry.html" class="card">
+      <i class="fas fa-boxes"></i>
+      <span>New Stock</span>
+    </a>
+      
+                  <a href="tag_print.html" class="card">
+    <i class="fas fa-cart-plus"></i>
+      <span>Tag Print</span>
+    </a>
+              <a href="stock_edit.html" class="card">
+      <i class="fas fa-boxes"></i>
+      <span>Stock Edit</span>
+    </a>
+
+      <a href="tag_cancel.html" class="card">
+    <i class="fas fa-cart-plus"></i>
+      <span>Tag Cancel</span>
+    </a>
+    
+          <a href="tag_reverse.html" class="card">
+    <i class="fas fa-cart-plus"></i>
+      <span>Tag Reversed</span>
+    </a>
+      
+      
+    </div>
+
+    <div id="messagesCards" class="card-container">
+<a href="huid-register.html" class="card">
+  <i class="fas fa-fingerprint"></i>
+  <span>HUID Register</span>
+</a>
+
+<a href="huid-view.html" class="card">
+  <i class="fas fa-eye"></i>
+  <span>HUID View</span>
+</a>
+
+<a href="huid-scan.html" class="card">
+  <i class="fas fa-barcode"></i>
+  <span>HUID Scan</span>
+</a>
+
+<a href="huid-upload.html" class="card">
+  <i class="fas fa-upload"></i>
+  <span>HUID Upload</span>
+</a>
+
+<a href="huid-verify.html" class="card">
+  <i class="fas fa-shield-alt"></i>
+  <span>HUID Verify</span>
+</a>
+      
+      
+      
+      
+      
+      
+    </div>
+
+    <div id="cameraCards" class="card-container">
+        <a href="purchase_view.html" class="card">
+      <i class="fas fa-shopping-bag"></i>
+      <span>Report Purchase</span>
+    </a>
+    
+    <a href="report.html" class="card">
+      <i class="fas fa-warehouse"></i>
+      <span>Report Stock</span>
+    </a>
+
+    <a href="sale_report.html" class="card">
+      <i class="fas fa-receipt"></i>
+      <span>Report Billing</span>
+    </a>
+    
+    
+    <a href="chart.html" class="card">
+    <i class="fas fa-chart-bar"></i>
+    <span> Chart View</span>
+    </a>
+
+    
+    
+    
+  <a href="op_view.html" class="card">
+      <i class="fas fa-warehouse"></i>
+      <span>Report Old Purchase</span>
+    </a>
+    
+    <a href="pending.html" class="card">
+      <i class="fas fa-receipt"></i>
+      <span>Report Pending Payment</span>
+    </a>
+    
+    
+    <a href="gstr1.html" class="card">
+      <i class="fas fa-file-alt"></i>
+      <span>GSTR-1</span>
+    </a>
+
+    <a href="GSTR3b.html" class="card">
+      <i class="fas fa-file-invoice-dollar"></i>
+      <span>GSTR-3B</span>
+    </a>
+    
+        <a href="gstr9.html" class="card">
+      <i class="fas fa-file-invoice-dollar"></i>
+      <span>GSTR-9</span>
+    </a>
+      
+  </div>
+
+    <div id="settingsCards" class="card-container">
+      
+      <a href="info.html" class="card">
+      <i class="fas fa-info-circle"></i>
+      <span>Software Info</span>
+    </a>
+      
+      
+    <a href="load.html" class="card">
+      <i class="fas fa-cog"></i>
+      <span>Settings</span>
+    </a>
+    
+    
+        <a href="mpin.html" class="card">
+<i class="fas fa-sign-out-alt"></i>
+     <span>Log Out</span>
+    </a>
+      
+       </div>
+
+  </div>
+  <div class="nav-container">
+
+    <ul class="nav">
+      <li class="active"><a href="#" data-text="Main Master" data-target="homeCards"><i class="fas fa-boxes"></i></a></li>
+      <li><a href="#" data-text="Bill Master" data-target="profileCards"><i class="fas fa-receipt"></i></a></li>
+      <li><a href="#" data-text="Coming Up Features !" data-target="messagesCards"><i class="fas fa-wand-magic-sparkles"></i></a></li>
+      <li><a href="#" data-text="Report Master" data-target="cameraCards"><i class="fas fa-file-alt"></i></a></li>
+      <li><a href="#" data-text="Master Settings" data-target="settingsCards"><i class="fas fa-cog"></i></a></li>
+      <div class="indicator"></div>
+    </ul><br>
+    
+          <h5 class="sastha-footer">Sastha Software | Call : (+91) 6383003056</h5>
+
+    
+  </div>
+
+  
+  
+
+  <script>
+    const items = document.querySelectorAll(".nav li");
+    const displayText = document.getElementById("displayText");
+    const cardContainers = document.querySelectorAll(".card-container");
+
+    items.forEach(item => {
+      item.addEventListener("click", () => {
+        items.forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
+
+        const text = item.querySelector("a").getAttribute("data-text");
+        const target = item.querySelector("a").getAttribute("data-target");
+        displayText.innerText = text;
+
+        cardContainers.forEach(div => {
+          div.style.display = "none";
+        });
+
+        document.getElementById(target).style.display = "flex";
+      });
+    });
+  </script>
+
+</body>
+</html>

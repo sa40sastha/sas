@@ -1,0 +1,755 @@
+<!-- Sastha Software Jewellery Billing with GST Input and Advance Amount -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sastha Software Jewellery Billing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff0f5;
+      padding: 20px;
+      color: #4d0039;
+      margin: 0;
+    }
+    h2 { text-align: center; color: #cc0066; margin-bottom: 10px; }
+    #loadingMsg {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #cc0066;
+    }
+    .input-group, .customer-details, .totals, .print-btn { margin-bottom: 20px; }
+    .input-group, .customer-details { display: flex; flex-wrap: wrap; gap: 10px; }
+    .input-group input, .customer-details input, .totals input {
+      padding: 10px; font-size: 14px; border: 1px solid #cc6699;
+      border-radius: 5px; background: #fff0f5; color: #660033; flex: 1; min-width: 140px;
+    }
+    .input-group button {
+      padding: 10px 20px; background: #cc0066; color: white;
+      border: none; border-radius: 5px; cursor: pointer;
+    }
+    table {
+      width: 100%; border-collapse: collapse; background: white;
+    }
+    th, td {
+      padding: 8px; border: 1px solid #ffd6e8; text-align: center; font-size: 13px;
+    }
+    th { background: #ffcce0; color: #660033; }
+
+    .invoice-box {
+      max-width: 1000px; margin: 40px auto 20px; padding: 20px;
+      background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      color: #000;
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 2px solid #ccc; padding-bottom: 10px; flex-wrap: wrap;
+    }
+    .header img { height: 50px; }
+    .shop-details {
+      flex-grow: 1; text-align: center; margin-left: -40px;
+    }
+    .summary {
+      margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between;
+    }
+    .terms, .summary-box {
+      width: 100%; max-width: 49%; font-size: 14px;
+    }
+    .terms ul { padding-left: 18px; margin: 0; }
+    .summary-box div {
+      display: flex; justify-content: space-between; padding: 4px 0;
+    }
+    .footer {
+      margin-top: 30px; display: flex; justify-content: space-between;
+      font-size: 14px; border-top: 1px solid #ccc; padding-top: 10px;
+    }
+    .thank-you { text-align: center; margin-top: 10px; font-weight: bold; }
+    .print-btn {
+      padding: 10px 20px; font-size: 16px; background: #99004d;
+      color: white; border: none; border-radius: 5px; cursor: pointer;
+    }
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #invoiceBox, #invoiceBox * {
+    visibility: visible;
+  }
+  #invoiceBox {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+      button {
+      padding: 10px 20px; background: #cc0066; color: white;
+      border: none; border-radius: 5px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+      ← Back
+    </button>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  
+
+<div id="searchSection">
+<input type="text" id="searchID" placeholder=" Last Tag No : " disabled style="background:#fff0f5; color:#000; opacity:1; border:0px solid #ccc;">
+    <div class="message" id="message"></div>
+  </div><br>
+  
+<h2 class="no-print"> Jewellery Billing</h2><br>
+<div id="loadingMsg" class="no-print">Loading Product Details...</div><br>
+  <br>
+  
+  
+  <button onclick="startScan()">Scan Tag</button>
+ <br><br>
+  <div id="reader"></div>
+  
+  
+<div class="input-group no-print">
+    <input type="number" id="rate" placeholder="Rate (₹/g)" value="">
+
+  <input type="text" id="productID" placeholder="Enter Product ID">
+<button onclick="addProduct(); updateRemarks();" disabled>Add Product</button>
+  
+</div>
+
+<div class="customer-details no-print">
+  <input id="custName" placeholder="Customer Name">
+  <input id="custMobile" placeholder="Mobile No.">
+  <input id="custAddress" placeholder="Address">
+  <input id="custCity" placeholder="City">
+
+</div>
+
+  
+<table id="productTable" class="no-print">
+
+  <thead>
+
+    <tr>
+
+      <th>S.No</th><th>Name</th><th>Metal</th><th>Gross</th><th>Wastage %</th><th>Net</th><th>Qty</th><th>Rate</th><th>MC</th><th>Extra</th><th>Total</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table><br>
+
+
+  
+  <!-- Old Items Table -->
+<div id="oldItemsSection" class="no-print">
+  <h4>Old Purchase Details</h4>
+  <table id="oldItemsTable">
+    <thead>
+      <tr>
+        <th>S.No</th><th>Metal</th><th>Product</th><th>Gram</th><th>Rate</th><th>Amount</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+    <h4 class="no-print"></h4>
+<button type="button" onclick="toggleOldPurchase()" class="no-print">+ Add Old Purchase</button><br>
+
+  <br>
+    <!-- Old Purchase Entry Box -->
+<div id="oldPurchaseBox" class="no-print" style="display:none; border:1px solid #ffb6c1; border-radius:10px; padding:15px;">
+  <h3>Old Ornament Purchase</h3>
+  <div class="input-group">
+    <select id="oldMetal">
+      <option value="">Select Metal Type</option>
+      <option>Gold</option>
+      <option>Silver</option>
+      <option>Platinum</option>
+    </select>
+    <input type="text" id="oldProduct" placeholder="Product Name">
+    <input type="number" id="oldGram" placeholder="Gram">
+    <input type="number" id="oldRate" placeholder="Rate">
+    <input type="number" id="oldAmount" placeholder="Amount" readonly>
+    <button onclick="addOldItem()">Add</button>
+  </div>
+</div><br>
+  
+<div class="totals no-print">
+<br><label>GST  Tax (%):</label><br>
+<br><input id="gstPct" type="number" value="3" oninput="updateTotal()">
+
+<br><br><label>Discount (₹):</label><br>
+<br><input id="discount" value="0" oninput="updateTotal()">
+
+<br><br><label id="advanceLabel" for="advanceAmt">Old Purchase Deduction (- ₹):</label><br>
+<br><input id="advanceAmt" value="0" oninput="updateTotal()">
+  
+<br><br><label>Received (₹):</label><br>
+<br><input id="receivedAmt" value="0" oninput="updateTotal()">
+
+<br><br><label>Balance  (₹):</label><br>
+<br><input id="balanceAmt" value="0" readonly>
+</div>
+
+<div class="invoice-box" id="invoiceBox" style="display:none">
+  <div class="header">
+    <img src="1.png" alt="Logo">
+    <div class="shop-details">
+      <strong style="font-size: 20px;">Sastha Jewellery</strong><br>
+      Madurai - 2<br><br> Tax Invoice Bill
+    </div>
+
+  </div>
+
+  <div style="margin-top: 10px; width: 100%;">
+    <div style="display: flex; justify-content: space-between;">
+      <div><strong>Name:</strong> <span id="showName"></span></div>
+      <div><strong>City:</strong> <span id="showCity"></span></div>
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+      <div><strong>Mobile:</strong> <span id="showMobile"></span></div>
+      <div><strong>Bill No:</strong> <span id="billNo"></span></div>
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+      <div><strong>Address:</strong> <span id="showAddress"></span></div>
+      <div><strong>Date:</strong> <span id="billDate"></span></div>
+    </div>
+  </div>
+
+  <table style="margin-top:20px;">
+    <thead>
+                
+<h5 style="margin-bottom: 10px; color: #cc0066; text-align: center;">New Purchase Details</h5>
+      <tr>
+        <th>S.No</th><th>Name</th><th>Metal</th><th>Gross</th><th>Wastage %</th><th>Net</th><th>Qty</th><th>Rate</th><th>MC</th><th>Extra</th><th>Total</th>
+      </tr>
+    </thead>
+    <tbody id="invoiceItems"></tbody>
+  </table>
+
+  
+<div id="printOldItemsSection" style="margin-top: 20px;">
+<h5 style="margin-bottom: 10px; color: #cc0066; text-align: center;">Old Purchase Details</h5>  <table style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th>S.No</th>
+        <th>Metal</th>
+        <th>Product</th>
+        <th>Gram</th>
+        <th>Rate</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody id="printOldItemsTable"></tbody>
+  </table>
+</div>
+  
+  <div class="summary">
+    <div class="terms">
+      <strong>Terms & Conditions</strong>
+      <ul>
+        <li>Goods once sold will not be taken back or exchanged.</li>
+        <li>Payment must be made in full at time of purchase.</li>
+        <li>Guarantee applies only if mentioned on bill.</li>
+        <li>Disputes subject to Madurai jurisdiction.</li>
+      </ul>
+    </div>
+    <div class="summary-box">
+      <div><span>Subtotal:</span><span id="sumSubtotal"></span></div>
+      <div><span id="gstLabel">GST (3%):</span><span id="sumGst"></span></div>
+      <div><span>Discount:</span><span id="sumDiscount"></span></div>
+      <div><strong>Grand Total:</strong><strong id="sumTotal"></strong></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>Customer Signature</div>
+    <div>Authorised Signature</div>
+  </div>
+
+  <div class="thank-you">Thanks For Purchasing Sastha Jewellery</div>
+</div>
+
+<center class="no-print">
+    <div id="statusMsg" style="margin-top:10px; font-weight:bold;"></div>
+
+  <button class="print-btn" id="saveBtn" onclick="saveAndShow()">Save & Print</button>
+</center>
+
+<script>
+const searchURL = 'https://script.google.com/macros/s/AKfycbywhCmxK_Tz1_kgVAz0pzitOQsx3tvQhFwB5le_bWOaWocsvNTh6iLSpe9GvaLsW0QsoQ/exec';
+const saveURL = 'https://script.google.com/macros/s/AKfycbzrkmNRgujFCXo948E7Z7Wc1oIy_g-r8PeZW9mwElHxHaI8JqGnWV7Wn7N7XMg0nGy97g/exec';
+
+let data = [], products = [];
+const addBtn = document.querySelector('.input-group button');
+const loadingMsg = document.getElementById('loadingMsg');
+
+addBtn.disabled = true;
+fetch(searchURL + '?action=read')
+  .then(res => res.json())
+  .then(json => {
+    data = json;
+    addBtn.disabled = false;
+    loadingMsg.style.display = 'none';
+  })
+  .catch(() => {
+    loadingMsg.innerText = " Failed to load product data.";
+  });
+
+function formatINR(n) {
+  return '₹' + (+n).toLocaleString('en-IN', {minimumFractionDigits:2});
+}
+
+  
+  function toggleOldPurchase() {
+  const box = document.getElementById('oldPurchaseBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+// Auto-calculate amount on input
+['oldGram', 'oldRate'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const gram = +document.getElementById('oldGram').value || 0;
+    const rate = +document.getElementById('oldRate').value || 0;
+    document.getElementById('oldAmount').value = (gram * rate).toFixed(2);
+  });
+});
+
+let oldItems = [];
+  function addOldItem() {
+  const metal = document.getElementById('oldMetal').value;
+  const name = document.getElementById('oldProduct').value.trim();
+  const gram = +document.getElementById('oldGram').value;
+  const rate = +document.getElementById('oldRate').value;
+  const amount = +(gram * rate).toFixed(2);
+
+  if (!metal || !name || gram <= 0 || rate <= 0) {
+    alert("Enter valid product name, metal, gram, and rate.");
+    return;
+  }
+
+  oldItems.push({metal, name, gram, rate, amount});
+  updateOldTable();
+  updateTotal();
+
+  // Clear fields
+  document.getElementById('oldMetal').value = '';
+  document.getElementById('oldProduct').value = '';
+  document.getElementById('oldGram').value = '';
+  document.getElementById('oldRate').value = '';
+  document.getElementById('oldAmount').value = '';
+}
+
+function updateOldTable() {
+  const tbody = document.querySelector('#oldItemsTable tbody');
+  tbody.innerHTML = '';
+  oldItems.forEach((item, index) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${item.metal}</td>
+        <td>${item.name}</td>
+        <td>${item.gram}</td>
+        <td>₹${item.rate}</td>
+        <td>₹${item.amount.toFixed(2)}</td>
+      </tr>`;
+  });
+}
+
+function getOldTotal() {
+  return oldItems.reduce((sum, item) => sum + item.amount, 0);
+}
+
+  
+function addProduct() {
+  const idInput = document.getElementById('productID');
+  const rateInput = document.getElementById('rate');
+  const id = idInput.value.trim().toLowerCase();
+  const rate = parseFloat(rateInput.value);
+  const p = data.find(d => d.ID.toLowerCase() === id);
+
+  if (!p || !rate) {
+    alert("Enter valid Product ID and Rate");
+    return;
+  }
+
+  // Check if remark is 'A'
+  if (!p.remark || p.remark.trim().toUpperCase() !== 'A') {
+    alert("This Tag Number Already Sale!");
+    return;
+  }
+
+  // Check for duplicate product by HUID (pro_code)
+  const alreadyExists = products.some(prod => prod.huid.toLowerCase() === p.pro_code.toLowerCase());
+  if (alreadyExists) {
+    alert("Not allowed: This product already exists!");
+    return;
+  }
+
+  const product = {
+    name: p.product_name || '', metal: p.metal_type || '',
+    gross: +p.gross_wt || 0, wastage_pct: +p.wastage_percentage || 0,
+    net: +p.net_wt || 0, qty: +p.qty || 1, hsn: p.hsn_code || '',
+    huid: p.pro_code || '', rate: rate,
+    mc: +p.labour_amt || 0, ex: +p.extra_charges || 0,
+  };
+  product.total = (product.net * product.rate) + product.mc + product.ex;
+  products.push(product);
+
+  alert("Product added successfully!");
+
+  // Clear input fields
+  idInput.value = '';
+  rateInput.value = '';
+  idInput.focus();
+
+  renderTable();
+  updateTotal();
+}
+  
+  
+      // tag cancel 
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyvMmdhAsdXQxTn3DP2Ob_ciQOyca3MOZ6UUxdxMXcpPv8pDs6EH7-3ZN-RABHx1s0s/exec";
+    let allData = [];
+
+    // Fetch stock data once on load
+    fetch(`${scriptURL}?action=getAllStock`)
+      .then(res => res.json())
+      .then(result => {
+        allData = result.slice(1); // Skip headers
+      })
+      .catch(() => {
+        document.getElementById("message").innerText = "❌ Failed to load data.";
+        document.getElementById("message").style.color = "red";
+      });
+
+    function updateRemarks() {
+      const id = document.getElementById("searchID").value.trim();
+      const msg = document.getElementById("message");
+
+      if (!id) {
+        msg.innerText = " Please enter a valid ID.";
+        msg.style.color = "orange";
+        return;
+      }
+
+      const matched = allData.find(row => String(row[0]) === id);
+
+      if (!matched) {
+        msg.innerText = " ID not found.";
+        msg.style.color = "red";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("action", "updateStockItem");
+      formData.append("id", id);
+      formData.append("remark", "O");
+
+      msg.innerText = " Loading...";
+      msg.style.color = "blue";
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.text())
+      .then(response => {
+        msg.innerText = response.includes("✅") ? "✅ Done !" : "❌ Not Done !";
+        msg.style.color = response.includes("✅") ? "green" : "red";
+      })
+      .catch(() => {
+        msg.innerText = " Error while updating.";
+        msg.style.color = "red";
+      });
+    }
+  //tag cancel
+
+  
+  const productID = document.getElementById('productID');
+    const searchID = document.getElementById('searchID');
+
+    function syncValues(source, target) {
+      const value = source.value.toUpperCase();
+      source.value = value;
+      target.value = value;
+    }
+
+    productID.addEventListener('input', () => {
+      syncValues(productID, searchID);
+    });
+
+    searchID.addEventListener('input', () => {
+      syncValues(searchID, productID);
+    });
+  
+function renderTable() {
+  const tbody = document.querySelector('#productTable tbody');
+  tbody.innerHTML = '';
+  products.forEach((p, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${i+1}</td><td>${p.name}</td><td>${p.metal}</td><td>${p.gross}</td><td>${p.wastage_pct}%</td>
+        <td>${p.net}</td><td>${p.qty}</td><td>${formatINR(p.rate)}</td><td>${formatINR(p.mc)}</td><td>${formatINR(p.ex)}</td><td>${formatINR(p.total)}</td>
+      </tr>
+      <tr>
+        <td colspan="11" style="text-align:left; font-size:12px;"><b>HSN:</b> ${p.hsn} &nbsp;&nbsp; <b>HUID:</b> ${p.huid}</td>
+      </tr>`;
+  });
+}
+
+  
+  // Add old purchase items to print
+const oldTbody = document.getElementById('printOldItemsTable');
+oldTbody.innerHTML = '';
+oldItems.forEach((item, index) => {
+  oldTbody.innerHTML += `
+    <tr>
+      <td>${index + 1}</td>
+      <td>${item.metal}</td>
+      <td>${item.name}</td>
+      <td>${item.gram}</td>
+      <td>${formatINR(item.rate)}</td>
+      <td>${formatINR(item.amount)}</td>
+    </tr>`;
+});
+  
+  
+  
+      let html5QrCode;
+
+    function startScan() {
+      const qrResult = document.getElementById('productID');
+      const reader = document.getElementById('reader');
+      reader.style.display = 'block';
+
+      html5QrCode = new Html5Qrcode("reader");
+
+      Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+          const backCamera = cameras.find(cam => cam.label.toLowerCase().includes('back')) || cameras[0];
+
+          html5QrCode.start(
+            { deviceId: { exact: backCamera.id } },
+            { fps: 10, qrbox: 250 },
+            decodedText => {
+              qrResult.value = decodedText;
+              html5QrCode.stop().then(() => {
+                reader.style.display = 'none';
+              }).catch(err => {
+                console.error("Stop error:", err);
+              });
+            },
+            errorMessage => {
+              // Optional: console.log(`Scan error: ${errorMessage}`);
+            }
+          );
+        } else {
+          alert("No camera found.");
+        }
+      }).catch(err => {
+        alert("Camera access error: " + err);
+      });
+    }
+  
+  
+  function goBack() {
+    window.location.href = "main.html";
+  }
+  
+  
+function updateTotal() {
+  const discount = +document.getElementById('discount').value;
+  const received = +document.getElementById('receivedAmt').value;
+  const gstPct = +document.getElementById('gstPct').value || 0;
+
+  const subtotal = products.reduce((sum, p) => sum + p.total, 0);
+  const gst = subtotal * (gstPct / 100);
+  const oldPurchase = getOldTotal();
+
+  // Set advance input value as old purchase total
+  const advanceInput = document.getElementById('advanceAmt');
+  const advanceLabel = document.querySelector('label[for="advanceAmt"]') || document.querySelector('label:contains("Advance")');
+
+  if (oldPurchase > 0) {
+    advanceInput.value = oldPurchase.toFixed(2);
+    advanceInput.readOnly = true;
+    if (advanceLabel) advanceLabel.innerText = "Old Purchase (₹):";
+  } else {
+    advanceInput.readOnly = false; // allow manual input
+    if (advanceLabel) advanceLabel.innerText = "Advance (₹):";
+  }
+  
+
+  const advance = +advanceInput.value;
+  const total = subtotal + gst - discount;
+  const balance = total - (advance + received);
+
+  document.getElementById('sumSubtotal').innerText = formatINR(subtotal);
+  document.getElementById('sumGst').innerText = formatINR(gst);
+  document.getElementById('sumDiscount').innerText = formatINR(discount);
+  document.getElementById('sumTotal').innerText = formatINR(total);
+  document.getElementById('balanceAmt').value = balance.toFixed(2);
+  document.getElementById('gstLabel').innerText = `GST (${gstPct}%):`;
+}
+  
+function saveAndShow() {
+  const name = document.getElementById('custName').value.trim();
+  const mob = document.getElementById('custMobile').value.trim();
+  const add = document.getElementById('custAddress').value.trim();
+  const city = document.getElementById('custCity').value.trim();
+  const saveBtn = document.getElementById('saveBtn');
+  const statusMsg = document.getElementById('statusMsg');
+
+  if (!name || !mob || products.length === 0) {
+    alert("Please enter customer details and add at least one product.");
+    return;
+  }
+
+  const now = new Date();
+  const date = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const time = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+  const advance = +document.getElementById('advanceAmt').value || 0;
+  const rcvd = +document.getElementById('receivedAmt').value || 0;
+  const bal = +document.getElementById('balanceAmt').value || 0;
+  const oldPurchaseAmt = getOldTotal();
+  const type = (oldItems.length > 0) ? 'Old Purchase' : 'Advance';
+
+  const invoiceData = {
+    name,
+    mob,
+    add,
+    city,
+    date,
+    time,
+    gstPct: document.getElementById('gstPct').value,
+    discount: document.getElementById('discount').value,
+    advance: advance,
+    received: rcvd,
+    balance: bal,
+    products,
+    oldItems,
+    type: type,
+    advanceAmt: advance,
+    oldPurchaseAmt: oldPurchaseAmt
+  };
+
+  saveBtn.disabled = true;
+  statusMsg.innerText = " Please wait... Saving Invoice";
+
+  fetch(saveURL, {
+    method: 'POST',
+    body: new URLSearchParams({
+      action: 'saveInvoice',
+      data: JSON.stringify(invoiceData)
+    })
+  })
+  .then(res => res.text())
+  .then(response => {
+    let resJson;
+    try {
+      resJson = JSON.parse(response);
+    } catch (e) {
+      statusMsg.innerText = " Error saving invoice.";
+      saveBtn.disabled = false;
+      return;
+    }
+
+    if (resJson.status !== "Success") {
+      statusMsg.innerText = " Failed to Save Invoice: " + (resJson.message || "Unknown error");
+      saveBtn.disabled = false;
+      return;
+    }
+
+    const billNo = resJson.billNo;
+
+    // Update print section
+    document.getElementById('showName').innerText = name;
+    document.getElementById('showMobile').innerText = mob;
+    document.getElementById('showAddress').innerText = add;
+    document.getElementById('showCity').innerText = city;
+    document.getElementById('billNo').innerText = billNo;
+    document.getElementById('billDate').innerText = `${date} | ${time}`;
+
+    // Load Products into Print Table
+    const tbody = document.getElementById('invoiceItems');
+    tbody.innerHTML = '';
+    products.forEach((p, i) => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${p.name}</td>
+          <td>${p.metal}</td>
+          <td>${p.gross}</td>
+          <td>${p.wastage_pct}%</td>
+          <td>${p.net}</td>
+          <td>${p.qty}</td>
+          <td>${formatINR(p.rate)}</td>
+          <td>${formatINR(p.mc)}</td>
+          <td>${formatINR(p.ex)}</td>
+          <td>${formatINR(p.total)}</td>
+        </tr>
+        <tr>
+          <td colspan="11" style="text-align:left; font-size:12px;">
+            <b>HSN:</b> ${p.hsn} &nbsp;&nbsp; <b>HUID:</b> ${p.huid}
+          </td>
+        </tr>`;
+    });
+
+    // Summary Section
+    const sumBox = document.querySelector('.summary-box');
+    sumBox.innerHTML += `
+      <div><span>${oldPurchaseAmt > 0 ? 'Old Purchase (₹):' : 'Advance (₹):'}</span><span>${formatINR(oldPurchaseAmt > 0 ? oldPurchaseAmt : advance)}</span></div>
+      <div><span>Received:</span><span>${formatINR(rcvd)}</span></div>
+      <div><strong>Balance:</strong><strong>${formatINR(bal)}</strong></div>
+    `;
+
+    // Old Purchase Print Section
+    const printOldSection = document.getElementById('printOldItemsSection');
+    const printOldBody = document.getElementById('printOldItemsTable');
+    printOldBody.innerHTML = '';
+
+    if (oldItems.length > 0) {
+      printOldSection.style.display = 'block';
+      oldItems.forEach((item, index) => {
+        printOldBody.innerHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${item.metal}</td>
+            <td>${item.name}</td>
+            <td>${item.gram}</td>
+            <td>${formatINR(item.rate)}</td>
+            <td>${formatINR(item.amount)}</td>
+          </tr>`;
+      });
+    } else {
+      printOldSection.style.display = 'none';
+    }
+
+    document.getElementById('invoiceBox').style.display = 'block';
+    updateTotal();
+    statusMsg.innerText = " Invoice Saved Successfully";
+    saveBtn.disabled = false;
+    saveBtn.style.display = "none";
+    window.print();
+  })
+  .catch(err => {
+    console.error(err);
+    statusMsg.innerText = " Error saving invoice.";
+    saveBtn.disabled = false;
+  });
+}
+  
+  
+
+</script>
+
+</body>
+</html>

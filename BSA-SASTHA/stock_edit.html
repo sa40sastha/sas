@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sastha Stock Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff0f5;
+      color: #4d0039;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #cc0066;
+    }
+    #searchBar {
+      max-width: 400px;
+      margin: 10px auto 20px;
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cc0066;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      text-align: left;
+    }
+    th {
+      background-color: #f9c6db;
+    }
+    tr:hover {
+      background-color: #ffe0ef;
+      cursor: pointer;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(204, 0, 102, 0.2);
+      max-width: 700px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 20px;
+      background-color: #cc0066;
+      color: white;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #b30059;
+    }
+    .message {
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+      ← Back
+    </button>
+  
+  <h2>📦 Stock Edit</h2>
+
+  <input type="text" id="searchBar" placeholder="🔍 Search by ID (e.g. 101)">
+
+  <div id="stockTable">Loading stock data...</div>
+
+  <form id="editForm" style="display:none;">
+    <h3>Edit Stock Item</h3>
+
+    <label>ID</label>
+    <input type="text" id="ID" name="id" readonly>
+
+    <label>Product Name</label>
+    <input type="text" id="product_name" name="product_name">
+
+    <label>Gross Weight</label>
+    <input type="text" id="gross_wt" name="gross_wt">
+
+    <label>Wastage %</label>
+    <input type="text" id="wastage_percentage" name="wastage_percentage">
+
+    <label>Net Weight</label>
+    <input type="text" id="net_wt" name="net_wt">
+
+    <label>Quantity</label>
+    <input type="text" id="qty" name="qty">
+
+    <label>Labour Amount</label>
+    <input type="text" id="labour_amt" name="labour_amt">
+
+    <label>Extra Charges</label>
+    <input type="text" id="extra_charges" name="extra_charges">
+
+    <label>Product Code</label>
+    <input type="text" id="pro_code" name="pro_code">
+
+    <label>Remark</label>
+    <input type="text" id="remark" name="remark">
+
+    <label>HSN Code</label>
+    <input type="text" id="hsn_code" name="hsn_code">
+
+    <label>Metal Type</label>
+    <input type="text" id="metal_type" name="metal_type">
+
+    <button type="submit" id="updateBtn">🔁 Update Stock</button>
+    <div class="message" id="message"></div>
+  </form>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyvMmdhAsdXQxTn3DP2Ob_ciQOyca3MOZ6UUxdxMXcpPv8pDs6EH7-3ZN-RABHx1s0s/exec";
+
+    let headers = [];
+    let allData = [];
+
+    // Load stock data
+    fetch(`${scriptURL}?action=getAllStock`)
+      .then(res => res.json())
+      .then(result => {
+        headers = result[0];
+        allData = result.slice(1);
+        displayTable(headers, allData);
+      })
+      .catch(err => {
+        document.getElementById('stockTable').innerHTML = "<p style='color:red;'>❌ Error loading data</p>";
+      });
+
+    // Display table from data
+    function displayTable(headers, rows) {
+      let html = `<table><thead><tr>`;
+      headers.forEach(h => html += `<th>${h}</th>`);
+      html += `</tr></thead><tbody>`;
+
+      rows.forEach((row, rowIndex) => {
+        html += `<tr onclick="selectRow(${rowIndex})">`;
+        row.forEach(cell => html += `<td>${cell}</td>`);
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table>`;
+      document.getElementById('stockTable').innerHTML = html;
+    }
+
+  
+  
+  function goBack() {
+    window.location.href = "main.html";
+  }
+  
+  
+    // Row select logic
+    function selectRow(index) {
+      const row = filteredData[index];
+      headers.forEach((key, i) => {
+        const input = document.getElementById(key);
+        if (input) input.value = row[i];
+      });
+      document.getElementById('editForm').style.display = 'block';
+      window.scrollTo({ top: document.getElementById('editForm').offsetTop - 30, behavior: 'smooth' });
+    }
+
+    // Filter rows by ID
+    const searchBar = document.getElementById("searchBar");
+    let filteredData = [];
+
+    searchBar.addEventListener("input", () => {
+      const searchID = searchBar.value.trim().toLowerCase();
+      if (searchID === "") {
+        filteredData = allData;
+      } else {
+        filteredData = allData.filter(row => String(row[0]).toLowerCase().includes(searchID));
+      }
+      displayTable(headers, filteredData);
+    });
+
+    // Form submit handler
+    document.getElementById("editForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const form = document.getElementById("editForm");
+      const formData = new FormData(form);
+      const button = document.getElementById("updateBtn");
+      const originalText = button.textContent;
+
+      formData.append("action", "updateStockItem");
+      button.textContent = "⏳ Please wait...";
+      button.disabled = true;
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.text())
+      .then(response => {
+        document.getElementById("message").innerText = response;
+        document.getElementById("message").style.color = response.includes("✅") ? "green" : "red";
+      })
+      .catch(err => {
+        document.getElementById("message").innerText = "❌ Update failed";
+        document.getElementById("message").style.color = "red";
+      })
+      .finally(() => {
+        button.textContent = originalText;
+        button.disabled = false;
+      });
+    });
+  </script>
+
+</body>
+</html>

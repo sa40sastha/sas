@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GSTR-9 Report Viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fff0f5;
+      padding: 20px;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      color: #d63384;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      border: 1px solid #ffd6e8;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(214, 51, 132, 0.1);
+    }
+
+    summary {
+      font-size: 18px;
+      padding: 10px;
+      background-color: #ffd6e8;
+      cursor: pointer;
+      color: #d63384;
+      font-weight: bold;
+      border-radius: 8px 8px 0 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid #f7c5d9;
+      padding: 6px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #ffe3f2;
+    }
+
+    tr:hover {
+      background-color: #fff0f8;
+    }
+
+    tfoot td {
+      font-weight: bold;
+      background-color: #ffeef7;
+    }
+
+    .loading {
+      text-align: center;
+      font-weight: bold;
+      color: #d63384;
+      margin: 20px 0;
+    }
+
+    @media print {
+      .no-print {
+        display: none;
+      }
+
+      summary {
+        background-color: #eee;
+        color: #000;
+      }
+
+      table {
+        font-size: 11px;
+      }
+
+      body {
+        background: white;
+        color: black;
+      }
+
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+<button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+      ← Back
+    </button>
+  
+  <h2>GSTR-9 </h2>
+
+  <div class="no-print loading" id="loadingMessage">Loading GSTR-9 Data...</div>
+
+    <div class="no-print" style="text-align: right; margin-top: 20px;">
+<br><button onclick="window.print()" style="padding: 10px 16px; background-color:#d63384; color: white; border: none; border-radius: 5px;">Print Report</button>
+    <button onclick="downloadPDF()" style="padding: 10px 16px; background-color:#198754; color: white; border: none; border-radius: 5px; margin-left: 10px;"> Download PDF</button>
+  </div><br>
+  <details class="section" open>
+    <summary>🔹 B2B Invoices Summary</summary>
+    <div id="b2bSection"></div>
+  </details>
+
+  <details class="section">
+    <summary>🔹 B2C Invoices Summary</summary>
+    <div id="b2cSection"></div>
+  </details>
+
+  <details class="section">
+    <summary>🔹 Credit/Debit Notes Summary</summary>
+    <div id="cdnSection"></div>
+  </details>
+
+  <details class="section">
+    <summary>🔹 Tax Paid Summary</summary>
+    <div id="taxPaidSection"></div>
+  </details>
+
+  <details class="section">
+    <summary>🔹 Input Tax Credit (ITC) Claimed</summary>
+    <div id="itcSection"></div>
+  </details>
+
+  <details class="section">
+    <summary>🔹 Reverse Charge Details</summary>
+    <div id="reverseChargeSection"></div>
+  </details>
+
+  <details class="section">
+    <summary>🔹 Other Details</summary>
+    <div id="othersSection"></div>
+  </details>
+
+
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbw1VD5-KYTYV6eECAls7g9ML0zYjyMuCW74uRSrTVP-7j_-DSY2ArQ7DR6VR0X2Ve7O/exec";
+
+    // Columns to skip for total
+    const excludedFields = ['mobile_no', 'city', 'address', 'rate', 'date', 'hsn', 'huid'];
+
+    function createTable(headers, rows) {
+      let html = '<table><thead><tr>';
+      headers.forEach(h => html += `<th>${h}</th>`);
+      html += '</tr></thead><tbody>';
+
+      let totals = Array(headers.length).fill(null);
+      const numericIndices = new Set();
+
+      rows.forEach(row => {
+        html += '<tr>';
+        row.forEach((cell, i) => {
+          html += `<td>${cell}</td>`;
+          const header = headers[i].toLowerCase().trim();
+          const num = parseFloat(cell);
+          if (!excludedFields.includes(header) && !isNaN(num)) {
+            if (totals[i] === null) totals[i] = 0;
+            totals[i] += num;
+            numericIndices.add(i);
+          }
+        });
+        html += '</tr>';
+      });
+
+      if (numericIndices.size > 0) {
+        html += '<tr style="font-weight:bold; background:#fff0f8;">';
+        headers.forEach((h, i) => {
+          if (i === 0) {
+            html += `<td>Total</td>`;
+          } else if (numericIndices.has(i)) {
+            html += `<td>${totals[i].toFixed(2)}</td>`;
+          } else {
+            html += `<td></td>`;
+          }
+        });
+        html += '</tr>';
+      }
+
+      html += '</tbody></table>';
+      return html;
+    }
+
+  
+  function goBack() {
+    window.location.href = "main.html";
+  }
+  
+  
+    function filterAndRender(data) {
+      const headers = data[0];
+      const rows = data.slice(1);
+
+      const getRows = (conditionFn) => rows.filter(row => conditionFn(row));
+
+      const b2b = getRows(r => r.includes("B2B"));
+      const b2c = getRows(r => r.includes("B2C"));
+      const cdn = getRows(r => r.includes("CDN") || r.includes("Credit Note") || r.includes("Debit Note"));
+      const taxPaid = getRows(r => r.includes("Tax Paid"));
+      const itc = getRows(r => r.includes("ITC"));
+      const reverse = getRows(r => r.includes("Reverse Charge"));
+      const others = getRows(r =>
+        !r.includes("B2B") && !r.includes("B2C") &&
+        !r.includes("CDN") && !r.includes("Credit Note") &&
+        !r.includes("Debit Note") && !r.includes("Tax Paid") &&
+        !r.includes("ITC") && !r.includes("Reverse Charge")
+      );
+
+      document.getElementById("b2bSection").innerHTML = createTable(headers, b2b);
+      document.getElementById("b2cSection").innerHTML = createTable(headers, b2c);
+      document.getElementById("cdnSection").innerHTML = createTable(headers, cdn);
+      document.getElementById("taxPaidSection").innerHTML = createTable(headers, taxPaid);
+      document.getElementById("itcSection").innerHTML = createTable(headers, itc);
+      document.getElementById("reverseChargeSection").innerHTML = createTable(headers, reverse);
+      document.getElementById("othersSection").innerHTML = createTable(headers, others);
+    }
+
+    fetch(scriptURL)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("loadingMessage").style.display = "none";
+        filterAndRender(data);
+      })
+      .catch(err => {
+        document.getElementById("loadingMessage").textContent = "❌ Failed to load GSTR-9 data.";
+        console.error(err);
+      });
+
+    function downloadPDF() {
+      const report = document.body.cloneNode(true);
+      report.querySelectorAll('.no-print').forEach(e => e.remove());
+
+      const opt = {
+        margin: 0.3,
+        filename: 'GSTR-9_Report_Sastha_Software.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+      };
+
+      html2pdf().from(report).set(opt).save();
+    }
+  </script>
+
+</body>
+</html>

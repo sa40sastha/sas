@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MPIN Login - Sastha Software</title>
+  <style>
+    :root {
+      --pink: #ff69b4;
+      --light-pink: #ffe6f0;
+      --dark-pink: #d63384;
+      --white: #ffffff;
+      --bg-glass: rgba(255, 255, 255, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #ffd6e8, #ffffff);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .glass-card {
+      backdrop-filter: blur(15px);
+      background: var(--bg-glass);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 8px 30px rgba(255, 105, 180, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: center;
+      animation: dropFade 1.2s ease;
+      width: 320px;
+    }
+
+    @keyframes dropFade {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .logo {
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(135deg, #ff69b4, #ffb6c1);
+      border-radius: 50%;
+      margin: 0 auto 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
+      animation: logoPulse 2s infinite;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.08);
+      }
+    }
+
+    h2 {
+      font-size: 24px;
+      color: #d63384;
+      margin-bottom: 20px;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 20px;
+      text-align: center;
+      border-radius: 12px;
+      border: none;
+      box-shadow: inset 3px 3px 6px #f5c6d8, inset -3px -3px 6px #fff;
+      margin-bottom: 25px;
+      background: var(--white);
+      outline: none;
+      transition: 0.3s ease;
+    }
+
+    input[type="password"]:focus {
+      background: #fff0f6;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      color: white;
+      background: linear-gradient(135deg, #ff69b4, #ff1493);
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(255, 105, 180, 0.4);
+      cursor: pointer;
+      transition: 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #d63384;
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 20px;
+      font-size: 14px;
+      color: #d63384;
+      text-align: center;
+      animation: floatFooter 4s ease-in-out infinite;
+    }
+
+    @keyframes floatFooter {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @media (max-width: 400px) {
+      .glass-card {
+        width: 90%;
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glass-card">
+    <div class="logo">BSA</div>
+    <h2>Enter - PIN</h2>
+    <input type="password" id="mpin" maxlength="4" inputmode="numeric" placeholder=" " oninput="validateInput(this)" />
+    <button onclick="checkMPIN()">Unlock</button>
+    <div id="error" class="error">Incorrect PIN. Try again.</div>
+  </div>
+
+  <div class="footer">Development by Sastha Software</div>
+
+  <script>
+    function validateInput(input) {
+      input.value = input.value.replace(/[^0-9]/g, '');
+    }
+
+    function checkMPIN() {
+      const pin = document.getElementById("mpin").value;
+      const error = document.getElementById("error");
+
+      if (pin === "4046") {
+        error.style.display = "none";
+        setTimeout(() => {
+          window.location.href = "main.html"; // Update to your destination page
+        }, 300);
+      } else {
+        error.style.display = "block";
+      }
+    }
+
+    function closeWindow() {
+      try {
+        window.open('', '_self');
+        window.close();
+      } catch (e) {
+        alert("Browser blocked auto-close. Please close the tab manually.");
+      }
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sastha Software Card</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #ffe6f0, #ffffff);
+      color: #333;
+    }
+
+    .card {
+      max-width: 400px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      overflow: hidden;
+      border: 1px solid #f0c0d0;
+    }
+
+    .header {
+      background-color: #e91e63;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .back-button {
+      position: absolute;
+      left: 15px;
+      top: 15px;
+      background: white;
+      color: #e91e63;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .back-button:hover {
+      background: #f8bbd0;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .header p {
+      margin: 5px 0 0;
+      font-style: italic;
+      font-size: 14px;
+      color: #fbdde7;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .content p {
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+
+    .content b {
+      color: #000;
+    }
+
+    .services {
+      padding: 20px;
+      border-top: 1px solid #eee;
+    }
+
+    .services h3 {
+      margin-top: 0;
+      color: #e91e63;
+    }
+
+    .services ul {
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    .services li {
+      margin-bottom: 8px;
+    }
+
+    .social {
+      padding: 15px 20px;
+      border-top: 1px solid #eee;
+      text-align: center;
+    }
+
+    .social a {
+      color: #e91e63;
+      text-decoration: none;
+      margin: 0 8px;
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      padding: 10px 0 15px;
+      color: #555;
+    }
+
+    .flag {
+      font-size: 14px;
+      margin-left: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <button class="back-button" onclick="goBack()">Back</button>
+      <h1>Sastha Software</h1>
+      <p>No.1 Billing & Managment Software</p>
+      <p>Tamilnadu, India (+91)</p>
+    </div>
+
+    <div class="content">
+      <p><b>Location:</b> Madurai, Tamil Nadu</p>
+      <p><b>Phone:</b> +91 63830 03056</p>
+      <p><b>Online Payment Number:</b> +91 63830 03056</p>
+      <p><b>Email:</b> softwaresastha@gmail.com</p>
+    </div>
+
+    <div class="services">
+      <h3>Our Services</h3>
+      <ul>
+        <li>Web & Mobile App Development</li>
+        <li>Billing & Invoice Software</li>
+        <li>E-Commerce Platform Solutions</li>
+        <li>RFID Integration</li>
+        <li>QR & Barcode Systems</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      Smart. Secure. Trusted.<br>
+      🇮🇳 Powering Digital India <span class="flag">🇮🇳</span>
+    </div>
+  </div>
+
+  <script>
+    function goBack() {
+      window.location.href = "main.html";
+    }
+  </script>
+</body>
+</html>

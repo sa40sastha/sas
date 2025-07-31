@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jewelry Sheet Viewer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <style>
+    :root {
+      --pink: #ec407a;
+      --pink-light: #fce4ec;
+      --border: #e0e0e0;
+    }
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 1rem;
+      background: #fff;
+      color: #333;
+    }
+
+    /* Back button style */
+    .back-btn {
+      display: inline-block;
+      background-color: var(--pink);
+      color: white;
+      padding: 0.4rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--pink);
+      margin: 0.2rem 0 1rem;
+      font-weight: 600;
+    }
+
+    /* Filter bar */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      justify-content: center;
+      background: var(--pink-light);
+      padding: 0.8rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      margin-bottom: 1rem;
+    }
+    select, input[type=text] {
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      min-width: 140px;
+    }
+    input[type=text] {
+      flex: 1;
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      min-width: 900px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: var(--pink-light);
+      font-weight: 600;
+    }
+    tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    /* Loading overlay */
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 99;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--pink);
+      backdrop-filter: blur(2px);
+    }
+
+    @media(max-width:480px) {
+      body {
+        padding: 0.5rem;
+      }
+      select, input[type=text] {
+        font-size: 0.85rem;
+      }
+      table {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loading">Please wait… loading data</div>
+
+<!-- Back button -->
+<button class="back-btn" onclick="location.href='main.html'">⬅ Back</button>
+
+<!-- Page title -->
+<h1>Purchase Report</h1>
+
+<!-- Filter bar -->
+<div class="filters">
+  <select id="metalFilter">
+    <option value="">All Metals</option>
+    <option>Gold 22K</option>
+    <option>Gold 18K</option>
+    <option>Silver</option>
+    <option>Platinum</option>
+  </select>
+
+  <input type="text" id="billSearch" placeholder="Search Bill No…">
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <table id="sheetTable"></table>
+</div>
+
+<script>
+  const ENDPOINT = "https://script.google.com/macros/s/AKfycbwisUuZ-l7IMBNjrn9_U7lLNAFMWOCaiupbcTSjUZJP05dwBc_nAswXBaGYhyr0z4ur/exec";
+
+  const tbl        = document.getElementById('sheetTable'),
+        metalSel   = document.getElementById('metalFilter'),
+        billSearch = document.getElementById('billSearch'),
+        loadingDiv = document.getElementById('loading');
+
+  let rowsData = [];
+
+  // Fetch data
+  fetch(ENDPOINT)
+    .then(r => r.json())
+    .then(json => {
+      rowsData = json;
+      buildTable(rowsData);
+    })
+    .catch(err => alert('Fetch error: ' + err))
+    .finally(() => loadingDiv.style.display = 'none');   // Hide loader
+
+  // Format date as dd-MMM-yyyy
+  function formatDate(value) {
+    const d = new Date(value);
+    if (isNaN(d)) return value;
+    const day = String(d.getDate()).padStart(2, '0');
+    const mon = d.toLocaleString('en-US', { month: 'short' });
+    return `${day}-${mon}-${d.getFullYear()}`;
+  }
+
+  // Build table
+  function buildTable(data) {
+    if (!data.length) {
+      tbl.innerHTML = '<caption>No data</caption>';
+      return;
+    }
+    const headers = Object.keys(data[0]);
+    const headHTML = '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+    const bodyHTML = '<tbody>' + data.map(r => '<tr>' +
+      headers.map(k => {
+        let val = r[k];
+        if (/date/i.test(k)) val = formatDate(val);
+        return `<td>${val}</td>`;
+      }).join('') + '</tr>').join('') + '</tbody>';
+    tbl.innerHTML = headHTML + bodyHTML;
+  }
+
+  // Apply filter
+  function applyFilter() {
+    const metalVal = metalSel.value.toLowerCase(),
+          billQ    = billSearch.value.trim().toLowerCase();
+    const filtered = rowsData.filter(r => {
+      const metalOk = !metalVal || (r['Metal'] || '').toLowerCase() === metalVal;
+      const billOk  = !billQ   || (r['Invoice No'] || '').toString().toLowerCase().includes(billQ);
+      return metalOk && billOk;
+    });
+    buildTable(filtered);
+  }
+
+  metalSel.addEventListener('change', applyFilter);
+  billSearch.addEventListener('input', applyFilter);
+</script>
+</body>
+</html>

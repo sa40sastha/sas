@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Old Purchase Report View</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fff0f5;
+      color: #333;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #d63384;
+    }
+
+    .filters {
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label {
+      font-weight: bold;
+      color: #d63384;
+    }
+
+    input, select, button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #d63384;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #c2186a;
+    }
+
+    .loading {
+      text-align: center;
+      color: #d63384;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 0 10px rgba(214, 51, 132, 0.2);
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 6px;
+      border: 1px solid #f7c5d9;
+      text-align: left;
+      max-width: 200px;
+      word-wrap: break-word;
+    }
+
+    th {
+      background-color: #ffd6e8;
+      color: #333;
+    }
+
+    tr:hover {
+      background-color: #fff0f8;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    tfoot td {
+      font-weight: bold;
+      background-color: #ffe3f2;
+    }
+
+    .print-btn {
+      float: right;
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+
+      body {
+        background: white;
+        color: black;
+        font-size: 12px;
+      }
+
+      .filters, .print-btn, .loading {
+        display: none !important;
+      }
+
+      table {
+        width: 100%;
+        box-shadow: none;
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 4px;
+        border: 1px solid #999;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+<button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+      ← Back
+    </button>
+  
+  <h2>Old Purchase Report</h2>
+
+  <div class="filters">
+    <label for="dateInput">Date:</label>
+    <input type="date" id="dateInput" />
+
+    <label for="monthInput">Month:</label>
+    <select id="monthInput">
+      <option value="">--All--</option>
+      <option value="jan">January</option>
+      <option value="feb">February</option>
+      <option value="mar">March</option>
+      <option value="apr">April</option>
+      <option value="may">May</option>
+      <option value="jun">June</option>
+      <option value="jul">July</option>
+      <option value="aug">August</option>
+      <option value="sep">September</option>
+      <option value="oct">October</option>
+      <option value="nov">November</option>
+      <option value="dec">December</option>
+    </select>
+
+    <label for="globalInput">Search:</label>
+    <input type="text" id="globalInput" placeholder="Search keyword..." />
+
+    <button onclick="filterData()">Search</button>
+    <button class="print-btn" onclick="window.print()"> Print PDF</button>
+  </div>
+
+  <div class="loading" id="loadingMessage">Loading... Please wait.</div>
+
+  <table id="gstrTable">
+    <thead></thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+  </table>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzzQDtCIId9j3IXq9r0Mf5M8k8-UWEUy4os5uxCeSReFWqZiWZ7BW741MBRbSSFv84A/exec";
+    let rawData = [];
+    let hiddenColIndexes = [];
+    const excludedSummaryCols = ["rate", "wastage_percentage", "hsn", "huid", "mobile_no"];
+    let timeSlapIndex = 0;
+
+    function formatDate(dateStr) {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                      "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      const day = d.getDate().toString().padStart(2, '0');
+      return `${day}-${months[d.getMonth()]}-${d.getFullYear()}`;
+    }
+
+    function formatNumber(val) {
+      const num = parseFloat(val);
+      return !isNaN(num) ? num.toFixed(2) : val;
+    }
+
+  function goBack() {
+    window.location.href = "main.html";
+  }
+  
+  
+    function renderTable(data) {
+      const table = document.getElementById("gstrTable");
+      const thead = table.querySelector("thead");
+      const tbody = table.querySelector("tbody");
+      const tfoot = table.querySelector("tfoot");
+
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+      tfoot.innerHTML = "";
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="100%">No records found</td></tr>`;
+        return;
+      }
+
+      const headers = data[0];
+      hiddenColIndexes = [];
+
+      const headerRow = document.createElement("tr");
+      headers.forEach((header, i) => {
+        const th = document.createElement("th");
+        th.textContent = header;
+
+        const lower = header.toLowerCase();
+        if (lower.includes("date")) {
+          th.classList.add("hidden");
+          hiddenColIndexes.push(i);
+        }
+
+        if (lower.includes("time_slap")) timeSlapIndex = i;
+
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+
+      const totals = new Array(headers.length).fill(0);
+
+      data.slice(1).forEach(row => {
+        const tr = document.createElement("tr");
+
+        row.forEach((cell, i) => {
+          const td = document.createElement("td");
+          const headerName = headers[i].toLowerCase();
+
+          if (hiddenColIndexes.includes(i)) {
+            td.classList.add("hidden");
+          } else if (i === timeSlapIndex) {
+            td.textContent = formatDate(cell);
+          } else if (!isNaN(cell) && cell !== "" && typeof cell !== "object" && !excludedSummaryCols.includes(headerName)) {
+            const num = parseFloat(cell);
+            totals[i] += num;
+            td.textContent = num.toFixed(2);
+          } else {
+            td.textContent = cell;
+          }
+
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      const footerRow = document.createElement("tr");
+
+      headers.forEach((header, i) => {
+        const td = document.createElement("td");
+        const headerName = header.toLowerCase();
+
+        if (hiddenColIndexes.includes(i)) {
+          td.classList.add("hidden");
+        } else if (!isNaN(totals[i]) && totals[i] !== 0 && !excludedSummaryCols.includes(headerName)) {
+          td.textContent = totals[i].toFixed(2);
+        } else {
+          td.textContent = i === 0 ? "Total" : "";
+        }
+
+        footerRow.appendChild(td);
+      });
+
+      tfoot.appendChild(footerRow);
+    }
+
+    function filterData() {
+      const dateVal = document.getElementById("dateInput").value;
+      const globalVal = document.getElementById("globalInput").value.toLowerCase();
+      const monthVal = document.getElementById("monthInput").value.toLowerCase();
+
+      const filtered = rawData.filter((row, idx) => {
+        if (idx === 0) return true;
+
+        const rowText = row.map(cell => String(cell).toLowerCase()).join(" ");
+
+        const rawDate = row[timeSlapIndex];
+        const rowDateObj = new Date(rawDate);
+        const rowDateISO = rowDateObj.toISOString().split('T')[0];
+        const rowMonth = rowDateObj.toLocaleString('default', { month: 'short' }).toLowerCase();
+
+        const matchDate = !dateVal || rowDateISO === dateVal;
+        const matchMonth = !monthVal || rowMonth === monthVal;
+        const matchText = !globalVal || rowText.includes(globalVal);
+
+        return matchDate && matchMonth && matchText;
+      });
+
+      renderTable(filtered);
+    }
+
+    fetch(scriptURL)
+      .then(res => res.json())
+      .then(data => {
+        rawData = data;
+        document.getElementById("loadingMessage").style.display = "none";
+        renderTable(data);
+      })
+      .catch(err => {
+        document.getElementById("loadingMessage").textContent = "Error loading data.";
+        console.error(err);
+      });
+  </script>
+
+</body>
+</html>

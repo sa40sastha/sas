@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sastha Remark Updater</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff0f5;
+      color: #4d0039;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #cc0066;
+    }
+    #searchSection {
+      max-width: 400px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(204, 0, 102, 0.2);
+    }
+    input, button {
+      width: 95%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      margin-top: 10px;
+      border: 1px solid #cc0066;
+    }
+    button {
+      background-color: #cc0066;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #b30059;
+    }
+    .message {
+      margin-top: 15px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+    ← Back
+  </button>
+
+  <h2>Tag Cancel</h2>
+
+  <div id="searchSection">
+    <input type="text" id="searchID" placeholder="🔍 Enter Product ID (e.g. kj1 or KJ1)">
+    <button onclick="updateRemark()">Update</button>
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyvMmdhAsdXQxTn3DP2Ob_ciQOyca3MOZ6UUxdxMXcpPv8pDs6EH7-3ZN-RABHx1s0s/exec";
+    let allData = [];
+
+    // Load data once when page loads
+    fetch(`${scriptURL}?action=getAllStock`)
+      .then(res => res.json())
+      .then(result => {
+        allData = result.slice(1); // Skip header
+      })
+      .catch(() => {
+        const msg = document.getElementById("message");
+        msg.innerText = "❌ Failed to load data from server.";
+        msg.style.color = "red";
+      });
+
+    function updateRemark() {
+      const inputID = document.getElementById("searchID").value.trim();
+      const msg = document.getElementById("message");
+
+      if (!inputID) {
+        msg.innerText = "⚠️ Please enter a valid ID.";
+        msg.style.color = "orange";
+        return;
+      }
+
+      // Case-insensitive match
+      const matched = allData.find(row => String(row[0]).toLowerCase() === inputID.toLowerCase());
+
+      if (!matched) {
+        msg.innerText = "❌ ID not found.";
+        msg.style.color = "red";
+        return;
+      }
+
+      const originalID = matched[0]; // Keep original case
+      const formData = new FormData();
+      formData.append("action", "updateStockItem");
+      formData.append("id", originalID);
+      formData.append("remark", "O");
+
+      msg.innerText = "⏳ Updating...";
+      msg.style.color = "blue";
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.text())
+      .then(response => {
+        if (response.includes("✅")) {
+          msg.innerText = "✅  Tag Cancel Successful ! ";
+          msg.style.color = "green";
+        } else {
+          msg.innerText = "❌ Tag Cancel failed.";
+          msg.style.color = "red";
+        }
+      })
+      .catch(() => {
+        msg.innerText = "❌ Error during update.";
+        msg.style.color = "red";
+      });
+    }
+
+    function goBack() {
+      window.location.href = "main.html";
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Print Tags - Sastha</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fffafc;
+      padding: 20px;
+      color: #333;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .header h2 {
+      color: #cc0066;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .back-btn {
+      background-color: transparent;
+      border: none;
+      color: #e91e63;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 6px 12px;
+      margin-right: auto;
+    }
+
+    .back-btn:hover {
+      text-decoration: underline;
+    }
+
+    .filters {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filters input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 160px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #e91e63;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #c2185b;
+    }
+
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .tag {
+      display: flex;
+      width: 6cm;
+      height: 3.5cm;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 8px;
+      background-color: white;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      page-break-inside: avoid;
+    }
+
+    .tag canvas {
+      width: 70px !important;
+      height: 70px !important;
+    }
+
+    .tag-details {
+      flex: 1;
+      padding-left: 10px;
+      text-align: right;
+    }
+
+    .tag-details p {
+      margin: 3px 0;
+      font-size: 13px;
+      color: #333;
+    }
+
+    @media (max-width: 600px) {
+      .tag {
+        width: 95%;
+        height: auto;
+        flex-direction: row;
+      }
+      .tag-details {
+        text-align: right;
+      }
+    }
+
+    @media print {
+      @page {
+        size: auto;
+        margin: 0;
+      }
+      body {
+        background: white;
+        padding: 0;
+      }
+      .filters, .header, button {
+        display: none;
+      }
+      .tag-container {
+        display: block;
+      }
+      .tag {
+        margin: 0;
+        page-break-after: always;
+        box-shadow: none;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <button class="back-btn" onclick="location.href='main.html'">← Back</button>
+  <h2>Jewel Tag Print</h2>
+</div>
+
+<div class="filters">
+  <input type="text" id="fromID" placeholder="From-Tag No (e.g., KJ1)">
+  <input type="text" id="toID" placeholder="To-Tag No (e.g., KJ20)">
+  <button onclick="filterAndRenderTags()">Generate Tags</button>
+  <button onclick="window.print()">🖨️ Print</button>
+</div>
+
+<div class="tag-container" id="tagContainer"></div>
+
+<script>
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbywhCmxK_Tz1_kgVAz0pzitOQsx3tvQhFwB5le_bWOaWocsvNTh6iLSpe9GvaLsW0QsoQ/exec';
+  let stockData = [];
+
+  function parseID(id) {
+    const match = id.match(/^([a-zA-Z]+)(\d+)$/);
+    return match ? { prefix: match[1], number: parseInt(match[2]) } : null;
+  }
+
+  function fetchStockData() {
+    fetch(scriptURL + '?action=read')
+      .then(response => response.json())
+      .then(data => {
+        if (!Array.isArray(data)) {
+          alert("Invalid data received from server");
+          return;
+        }
+        stockData = data;
+      })
+      .catch(error => {
+        console.error("Fetch error:", error);
+        alert("Failed to fetch stock data");
+      });
+  }
+
+  function filterAndRenderTags() {
+    const fromVal = document.getElementById("fromID").value.trim();
+    const toVal = document.getElementById("toID").value.trim();
+    let filtered = [];
+
+    // Case 1: single ID
+    if (fromVal && !toVal) {
+      filtered = stockData.filter(row => row.ID && row.ID.toUpperCase() === fromVal.toUpperCase());
+    }
+    // Case 2: range from-to
+    else if (fromVal && toVal) {
+      const from = parseID(fromVal);
+      const to = parseID(toVal);
+
+      if (!from || !to || from.prefix !== to.prefix || from.number > to.number) {
+        alert("Please enter valid ID range like KJ1 to KJ20");
+        return;
+      }
+
+      const prefix = from.prefix.toUpperCase();
+      const start = from.number;
+      const end = to.number;
+
+      filtered = stockData.filter(item => {
+        const parsed = parseID(item.ID || "");
+        return (
+          parsed &&
+          parsed.prefix.toUpperCase() === prefix &&
+          parsed.number >= start &&
+          parsed.number <= end
+        );
+      });
+    } else {
+      alert("Please enter at least one ID.");
+      return;
+    }
+
+    renderTags(filtered);
+  }
+
+  function renderTags(data) {
+    const container = document.getElementById("tagContainer");
+    container.innerHTML = "";
+
+    if (data.length === 0) {
+      container.innerHTML = "<p>No data found for given ID or range.</p>";
+      return;
+    }
+
+    data.forEach(row => {
+      const tagDiv = document.createElement("div");
+      tagDiv.className = "tag";
+
+      const qr = document.createElement("canvas");
+      new QRious({
+        element: qr,
+        value: row.ID || '',
+        size: 100
+      });
+
+      const details = document.createElement("div");
+      details.className = "tag-details";
+      details.innerHTML = `
+        <p><strong>Tag No:</strong> ${row.ID || ""}</p>
+        <p><strong>Gross Wt:</strong> ${row.gross_wt || ""}g</p>
+        <p><strong>HUID:</strong> ${row.pro_code || ""}</p>
+      `;
+
+      tagDiv.appendChild(qr);
+      tagDiv.appendChild(details);
+      container.appendChild(tagDiv);
+    });
+  }
+
+  window.onload = fetchStockData;
+</script>
+
+</body>
+</html>

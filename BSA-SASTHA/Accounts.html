@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jewellery Accounts - Sastha Software</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fff0f5;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #cc0066;
+    }
+
+    .toggle-btn, .submit-btn {
+      background-color: #cc0066;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .submit-btn {
+      background-color: #28a745;
+      margin-top: 10px;
+    }
+
+    .entry-section {
+      background: #ffffff;
+      border: 2px solid #cc0066;
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease-out;
+    }
+
+    .entry-section.active {
+      max-height: 1000px;
+      transition: max-height 0.5s ease-in;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      flex: 1 1 45%;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f9c9dd;
+    }
+
+    .edit-btn {
+      background-color: #ffc107;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    @media(max-width: 600px) {
+      .form-group {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Sastha Jewellery Income & Expense</h2>
+
+  <button class="toggle-btn" onclick="toggleEntry()">+ Add New Entry</button>
+
+  <div id="entrySection" class="entry-section">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="date">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="type" onchange="setCategories()">
+          <option value="">Select</option>
+          <option value="Income">Income</option>
+          <option value="Expense">Expense</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="category"></select>
+      </div>
+      <div class="form-group">
+        <label>Amount (₹)</label>
+        <input type="number" id="amount">
+      </div>
+      <div class="form-group" style="flex: 1 1 100%;">
+        <label>Remarks</label>
+        <textarea id="remarks" rows="2" placeholder="Optional remarks..."></textarea>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="saveEntry()">Save Entry</button>
+  </div>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Amount</th>
+        <th>Remarks</th>
+        <th>Edit</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const incomeCategories = [
+      "Sales (Cash)", "Sales (Credit)", "Advance Received", "Interest Received",
+      "Loan Received", "Investment Return", "Jewellery Return", "Other Income"
+    ];
+
+    const expenseCategories = [
+      "Gold Purchase", "Silver Purchase", "Labour Charges", "Ornament Making Charges",
+      "Repair Charges", "Hallmarking Fees", "Wastage Loss", "Electricity Bill",
+      "Water Charges", "GST Paid", "Loan Payment", "Rent", "Transportation",
+      "Staff Salary", "Other Expense"
+    ];
+
+    let editingIndex = -1;
+    const entries = [];
+
+    function toggleEntry() {
+      document.getElementById("entrySection").classList.toggle("active");
+    }
+
+    function setCategories() {
+      const type = document.getElementById("type").value;
+      const catSelect = document.getElementById("category");
+      catSelect.innerHTML = "<option value=''>Select Category</option>";
+
+      const list = type === "Income" ? incomeCategories : expenseCategories;
+      list.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item;
+        opt.textContent = item;
+        catSelect.appendChild(opt);
+      });
+    }
+
+    function saveEntry() {
+      const date = document.getElementById("date").value;
+      const type = document.getElementById("type").value;
+      const category = document.getElementById("category").value;
+      const amount = document.getElementById("amount").value;
+      const remarks = document.getElementById("remarks").value;
+
+      if (!date || !type || !category || !amount) {
+        alert("Please fill all required fields.");
+        return;
+      }
+
+      const data = { date, type, category, amount, remarks };
+
+      if (editingIndex >= 0) {
+        entries[editingIndex] = data;
+        editingIndex = -1;
+      } else {
+        entries.push(data);
+      }
+
+      renderTable();
+      clearForm();
+    }
+
+    function clearForm() {
+      document.getElementById("date").value = "";
+      document.getElementById("type").value = "";
+      document.getElementById("category").innerHTML = "";
+      document.getElementById("amount").value = "";
+      document.getElementById("remarks").value = "";
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector("#dataTable tbody");
+      tbody.innerHTML = "";
+
+      entries.forEach((entry, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.date}</td>
+          <td>${entry.type}</td>
+          <td>${entry.category}</td>
+          <td>${entry.amount}</td>
+          <td>${entry.remarks}</td>
+          <td><button class="edit-btn" onclick="editEntry(${index})">Edit</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function editEntry(index) {
+      const entry = entries[index];
+      document.getElementById("entrySection").classList.add("active");
+      document.getElementById("date").value = entry.date;
+      document.getElementById("type").value = entry.type;
+      setCategories();
+      document.getElementById("category").value = entry.category;
+      document.getElementById("amount").value = entry.amount;
+      document.getElementById("remarks").value = entry.remarks;
+      editingIndex = index;
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sastha Software – Invoice Editor</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #ffe6f0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      color: #cc0066;
+    }
+
+    #loader {
+      text-align: center;
+      font-size: 16px;
+      color: #cc0066;
+      display: none;
+    }
+
+    input[type="text"] {
+      padding: 8px;
+      width: 200px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #cc66a1;
+      background-color: #fff0f5;
+    }
+
+    button {
+      padding: 8px 14px;
+      background-color: #cc0066;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background-color: #99004d;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      font-size: 14px;
+      background-color: white;
+      border-radius: 10px;
+      overflow: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #ffb6c1;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #ff99cc;
+      color: white;
+    }
+
+    td input[type="number"] {
+      width: 100px;
+      padding: 5px;
+      border: 1px solid #cc66a1;
+      border-radius: 4px;
+      background-color: #fff0f5;
+    }
+
+    #search-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #resultsTable {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+      ← Back
+    </button>
+  
+  <h2>Buy Back Amount</h2>
+
+  <div id="search-section">
+    <input type="text" id="searchMobile" placeholder="Enter Mobile Number">
+    <button onclick="searchRecords('mobile_no')">Search by Mobile</button>
+    <input type="text" id="searchBillNo" placeholder="Enter Bill Number">
+    <button onclick="searchRecords('bill_no')">Search by Bill No</button>
+  </div>
+
+  <div id="loader">Loading, please wait...</div>
+
+  <table id="resultsTable">
+    <thead id="resultsHeader"></thead>
+    <tbody id="resultsBody"></tbody>
+  </table>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwKe8UasJhGY6fNpRrlmbB15j_hDYZqHjxWXZIX-hl0_n3fl8FHgfgstop36epz-nz1nA/exec";
+    let sheetHeaders = [];
+    let sheetData = [];
+
+    async function fetchAllInvoices() {
+      document.getElementById('loader').style.display = 'block';
+      try {
+        const res = await fetch(`${scriptURL}?action=getAllInvoices`);
+        const data = await res.json();
+        sheetHeaders = data[0];
+        sheetData = data.slice(1);
+      } catch (err) {
+        alert("Failed to fetch data: " + err);
+      } finally {
+        document.getElementById('loader').style.display = 'none';
+      }
+    }
+
+  function goBack() {
+    window.location.href = "main.html";
+  }
+  
+    function formatDate(value) {
+      if (!value) return '';
+      const d = new Date(value);
+      if (isNaN(d)) return value;
+      const day = d.getDate().toString().padStart(2, '0');
+      const month = d.toLocaleString('en-us', { month: 'short' });
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+  
+  
+  
+    function searchRecords(type) {
+      const input = (type === 'mobile_no') 
+        ? document.getElementById('searchMobile').value.trim().toLowerCase()
+        : document.getElementById('searchBillNo').value.trim().toLowerCase();
+
+      if (!input) return alert(`Enter ${type.replace('_', ' ')} to search.`);
+
+      const columnIndex = sheetHeaders.findIndex(h => h.toLowerCase() === type);
+      if (columnIndex === -1) return alert(`"${type}" column not found.`);
+
+      const matches = sheetData
+        .map((row, idx) => ({ row, idx }))
+        .filter(r => String(r.row[columnIndex]).toLowerCase() === input);
+
+      displayResults(matches);
+    }
+
+    function displayResults(results) {
+      const table = document.getElementById('resultsTable');
+      const thead = document.getElementById('resultsHeader');
+      const tbody = document.getElementById('resultsBody');
+
+      if (results.length === 0) {
+        table.style.display = 'none';
+        alert("No matching records found.");
+        return;
+      }
+
+      // Create header
+      let headHTML = "<tr>";
+      sheetHeaders.forEach(h => headHTML += `<th>${h}</th>`);
+      headHTML += `<th>Action</th></tr>`;
+      thead.innerHTML = headHTML;
+
+      // Create rows
+      tbody.innerHTML = '';
+      const timeSlapIndex = sheetHeaders.findIndex(h => h.toLowerCase() === 'time_slap');
+
+      results.forEach(({ row, idx }, i) => {
+        let rowHTML = "<tr>";
+        row.forEach((cell, j) => {
+          if (j === 24) {
+            rowHTML += `<td><input type="number" id="bal_${i}" value="${cell}"></td>`;
+          } else if (j === timeSlapIndex) {
+            rowHTML += `<td>${formatDate(cell)}</td>`;
+          } else {
+            rowHTML += `<td>${cell}</td>`;
+          }
+        });
+
+        rowHTML += `<td><button onclick="updateBalance('${row[1]}', ${i})">Update</button></td></tr>`;
+        tbody.innerHTML += rowHTML;
+      });
+
+      table.style.display = 'table';
+    }
+
+    async function updateBalance(billNo, index) {
+      const newBalance = document.getElementById(`bal_${index}`).value;
+
+      const formData = new URLSearchParams();
+      formData.append("action", "updateBalance");
+      formData.append("bill_no", billNo);
+      formData.append("balance", newBalance);
+
+      const res = await fetch(scriptURL, {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await res.text();
+      alert(result);
+    }
+
+    fetchAllInvoices();
+  </script>
+</body>
+</html>

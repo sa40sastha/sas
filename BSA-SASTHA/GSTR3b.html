@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Jewelry Sheet Viewer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- ▸▸ jsPDF & AutoTable CDN ◂◂ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --pink:#ec407a;
+    --pink-light:#fce4ec;
+    --border:#e0e0e0;
+  }
+  *{box-sizing:border-box;font-family:"Segoe UI",sans-serif}
+  body{margin:0;padding:1rem;background:#fff;color:#333}
+  h1{text-align:center;color:var(--pink);margin:.2rem 0 1rem;font-weight:600}/* ── filter bar ─────────────────────────── */ .filters{ display:flex;flex-wrap:wrap;gap:.8rem;justify-content:center; background:var(--pink-light);padding:.8rem;border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,.04);margin-bottom:1rem } select,input[type=text],button{ padding:.55rem .7rem;border:1px solid var(--border);border-radius:8px; font-size:.95rem;min-width:140px } button{cursor:pointer;background:var(--pink);color:#fff;font-weight:600;transition:.2s} button:hover{opacity:.9} input[type=text]{flex:1}
+
+/* ── table ─────────────────────────────── */ .table-wrap{overflow-x:auto} table{ width:100%;border-collapse:collapse;font-size:.88rem;min-width:900px } th,td{ border:1px solid var(--border);padding:.45rem .5rem;text-align:center } th{background:var(--pink-light);font-weight:600} tbody tr:nth-child(even){background:#fafafa}
+
+/* ── loading overlay ───────────────────── */ #loading{ position:fixed;inset:0;display:flex;align-items:center;justify-content:center; background:rgba(255,255,255,.8);z-index:99;font-size:1.2rem;font-weight:600; color:var(--pink);backdrop-filter:blur(2px) }
+
+@media(max-width:480px){ body{padding:.5rem} select,input[type=text],button{font-size:.85rem} table{font-size:.8rem} } </style>
+
+</head>
+<button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+      ← Back
+    </button>
+
+<body><div id="loading">Please wait… loading data</div><h1>(GSTR - 3B) Purchase Report</h1><!-- ▸▸ Filter bar ◂◂ --><div class="filters">
+  <select id="metalFilter">
+    <option value="">All Metals</option>
+    <option>Gold 22K</option>
+    <option>Gold 18K</option>
+    <option>Silver</option>
+    <option>Platinum</option>
+  </select>  <!-- ── month filter ── -->  <select id="monthFilter">
+    <option value="">All Months</option>
+  </select>  <input type="text" id="billSearch" placeholder="Search Bill No…">  <!-- ▸▸ Export Button ◂◂ --><button id="exportBtn">Export PDF</button>
+
+</div><!-- ▸▸ Table ◂◂ --><div class="table-wrap">
+  <table id="sheetTable"></table>
+</div><script>
+  const ENDPOINT = "https://script.google.com/macros/s/AKfycbwisUuZ-l7IMBNjrn9_U7lLNAFMWOCaiupbcTSjUZJP05dwBc_nAswXBaGYhyr0z4ur/exec";
+  const SHOP_NAME = "Sastha Jewellery,Madurai"; // ⇦ CHANGE TO YOUR SHOP NAME
+
+  const tbl        = document.getElementById('sheetTable'),
+        metalSel   = document.getElementById('metalFilter'),
+        monthSel   = document.getElementById('monthFilter'),
+        billSearch = document.getElementById('billSearch'),
+        loadingDiv = document.getElementById('loading'),
+        exportBtn  = document.getElementById('exportBtn');
+
+  let rowsData = [];
+
+  /* ── fetch data then hide loader ── */
+  fetch(ENDPOINT)
+    .then(r => r.json())
+    .then(json => {
+      rowsData = json;
+      populateMonthOptions(rowsData);
+      buildTable(rowsData);
+    })
+    .catch(err => alert('Fetch error: ' + err))
+    .finally(() => loadingDiv.style.display = 'none');
+
+  /* format date as dd-MMM-yyyy */
+  function formatDate(value){
+    const d = new Date(value);
+    if(isNaN(d)) return value;
+    const day = String(d.getDate()).padStart(2,'0');
+    const mon = d.toLocaleString('en-US',{month:'short'});
+    return `${day}-${mon}-${d.getFullYear()}`;
+  }
+
+  /* ── populate distinct months in dropdown ── */
+  function populateMonthOptions(data){
+    const months = new Set();
+    data.forEach(r=>{
+      const d = new Date(r['Date'] || r['date'] || r['Invoice Date']);
+      if(!isNaN(d)){
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        months.add(key);
+      }
+    });
+    Array.from(months).sort().reverse().forEach(key=>{
+      const [y,m] = key.split('-');
+      const monthName = new Date(y,m-1,1).toLocaleString('en-US',{month:'short'});
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = `${monthName} ${y}`;
+      monthSel.appendChild(opt);
+    });
+  }
+
+  
+  function goBack() {
+    window.location.href = "main.html";
+  }
+  
+  
+  /* build / rebuild table in DOM */
+  function buildTable(data){
+    if(!data.length){
+      tbl.innerHTML = '<caption>No data</caption>';
+      return;
+    }
+    const headers = Object.keys(data[0]);
+    const headHTML = '<thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead>';
+    const bodyHTML = '<tbody>'+data.map(r=>'<tr>'+headers.map(k=>{
+      let val = r[k];
+      if(/date/i.test(k)) val = formatDate(val);
+      return `<td>${val}</td>`;}).join('')+'</tr>').join('')+'</tbody>';
+    tbl.innerHTML = headHTML + bodyHTML;
+  }
+
+  /* filter function */
+  function applyFilter(){
+    const metalVal = metalSel.value.toLowerCase(),
+          billQ    = billSearch.value.trim().toLowerCase(),
+          monthVal = monthSel.value;
+
+    const filtered = rowsData.filter(r=>{
+      const metalOk = !metalVal || (r['Metal']||'').toLowerCase()===metalVal;
+      const billOk  = !billQ   || (r['Invoice No']||'').toString().toLowerCase().includes(billQ);
+      let monthOk = true;
+      if(monthVal){
+        const d = new Date(r['Date'] || r['date'] || r['Invoice Date']);
+        if(isNaN(d)) monthOk=false;
+        else monthOk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === monthVal;
+      }
+      return metalOk && billOk && monthOk;
+    });
+    buildTable(filtered);
+  }
+
+  metalSel.addEventListener('change', applyFilter);
+  monthSel.addEventListener('change', applyFilter);
+  billSearch.addEventListener('input', applyFilter);
+
+  /* ── PDF Export ── */
+  exportBtn.addEventListener('click', ()=>{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+
+    const marginX = 40, marginY = 40, lineHeight = 18;
+
+    // Header
+    doc.setFontSize(18);
+    doc.setFont('helvetica','bold');
+    doc.text(SHOP_NAME, doc.internal.pageSize.getWidth()/2, marginY, {align:'center'});
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica','normal');
+    doc.text(`Printed: ${new Date().toLocaleString()}`, marginX, marginY + lineHeight);
+
+    // Purchase Report Table title
+    doc.setFontSize(14);
+    doc.setFont('helvetica','bold');
+    doc.text('Purchase Report', marginX, marginY + 2*lineHeight + 10);
+
+    // Table 1 – Purchase Report (current filtered table)
+    const tableData = Array.from(tbl.querySelectorAll('tbody tr')).map(tr=>
+      Array.from(tr.children).map(td=>td.textContent));
+    const tableHeaders = Array.from(tbl.querySelectorAll('thead th')).map(th=>th.textContent);
+
+    doc.autoTable({
+      startY: marginY + 2*lineHeight + 20,
+      head:[tableHeaders],
+      body:tableData,
+      styles:{fontSize:8,cellPadding:3},
+      margin:{left:marginX,right:marginX}
+    });
+
+    // Add GSTR‑3B title & placeholder table
+    let finalY = doc.lastAutoTable.finalY || marginY + 120;
+    finalY += 30;
+    doc.setFontSize(14);
+    doc.setFont('helvetica','bold');
+    doc.text('GSTR-3B', marginX, finalY);
+
+    // ── Example placeholder rows ──
+    const gstrHeaders = ['Section','Description','Taxable Value','IGST','CGST','SGST'];
+    const gstrBody = [
+      ['3.1(a)','Outward + RCM', '—','—','—','—'],
+      ['4','ITC Eligible', '—','—','—','—']
+    ];
+
+    doc.autoTable({
+      startY: finalY + 10,
+      head:[gstrHeaders],
+      body:gstrBody,
+      styles:{fontSize:9,cellPadding:3},
+      margin:{left:marginX,right:marginX}
+    });
+
+    doc.save(`Purchase_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+  });
+</script></body>
+</html>

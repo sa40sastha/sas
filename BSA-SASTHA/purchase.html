@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jewelry</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root {
+      --pri: #e91e63;
+      --pri-dark: #d81b60;
+      --bg: #fff7fa;
+      --card-bg: #ffffff;
+      --text: #333;
+    }
+    * { box-sizing: border-box; font-family: "Segoe UI", sans-serif }
+    body { margin: 0; padding: 1rem; background: var(--bg); color: var(--text) }
+    h1 { margin: 0.2rem 0 0.6rem; text-align: center; color: var(--pri) }
+    .card {
+      max-width: 860px;
+      margin: auto;
+      background: var(--card-bg);
+      padding: 1.2rem 1.6rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .08)
+    }
+    fieldset { border: none; margin: 1rem 0 }
+    legend { font-weight: 600; color: var(--pri); margin-bottom: 0.35rem }
+    label { display: block; font-size: 0.85rem; margin-bottom: 0.2rem }
+    input, select {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: #fff
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem
+    }
+    .submit {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--pri);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s
+    }
+    .submit:hover:enabled {
+      background: var(--pri-dark);
+    }
+    .submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .total {
+      margin-top: 0.4rem;
+      font-weight: 600;
+      text-align: right
+    }
+    .back-btn {
+      display: inline-block;
+      background: var(--pri);
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: var(--pri-dark);
+    }
+    @media(max-width:480px){
+      .card{padding:1rem}
+    }
+  </style>
+</head>
+<body>
+
+<div style="max-width:860px;margin:auto;">
+  <a href="main.html" class="back-btn">← Back</a>
+</div>
+
+<h1>Purchase</h1>
+
+<script>
+  const ENDPOINT = "https://script.google.com/macros/s/AKfycbwisUuZ-l7IMBNjrn9_U7lLNAFMWOCaiupbcTSjUZJP05dwBc_nAswXBaGYhyr0z4ur/exec";
+</script>
+
+<div class="card">
+  <form id="ioForm" autocomplete="off">
+    <!-- Entry Type -->
+    <fieldset>
+      <legend>Entry Type</legend>
+      <select name="entryType" required>
+        <option value="">Choose...</option>
+        <option>Supplier → Shop</option>
+        <option>Shop → Customer</option>
+      </select>
+    </fieldset>
+
+    <!-- Party & Invoice -->
+    <fieldset>
+      <legend>Party / Customer & Invoice</legend>
+      <div class="grid2">
+        <label>Party / Customer *
+          <input required name="party">
+        </label>
+        <label>Invoice No *
+          <input required name="invoiceNo">
+        </label>
+      </div>
+      <label>Invoice Date *
+        <input type="date" required name="invoiceDate">
+      </label>
+    </fieldset>
+
+    <!-- Item -->
+    <fieldset>
+      <legend>Item</legend>
+      <div class="grid2">
+        <label>Item *
+          <input required name="item">
+        </label>
+        <label>Metal
+          <select name="metal" required>
+            <option value="">--</option>
+            <option>Gold 22K</option>
+            <option>Gold 18K</option>
+            <option>Silver</option>
+            <option>Platinum</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid2">
+        <label>Weight (g)*
+          <input type="number" step="0.01" name="weight" required>
+        </label>
+        <label>Rate ₹/g*
+          <input type="number" step="0.01" name="rate" required>
+        </label>
+      </div>
+      <div class="grid2">
+        <label>Making ₹
+          <input type="number" step="0.01" name="making" value="0">
+        </label>
+        <label>Stone ₹
+          <input type="number" step="0.01" name="stone" value="0">
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- Summary -->
+    <fieldset>
+      <legend>Summary</legend>
+      <div class="grid2">
+        <label>Discount ₹
+          <input type="number" step="0.01" name="discount" value="0">
+        </label>
+        <label>GST %
+          <input type="number" step="0.01" name="gst" value="3">
+        </label>
+      </div>
+      <div class="total">Total ₹ <span id="total">0.00</span></div>
+    </fieldset>
+
+    <button class="submit" type="submit">Save</button>
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById('ioForm'),
+        totalSpan = document.getElementById('total'),
+        submitBtn = document.querySelector('.submit');
+
+  form.addEventListener('input', calcTotal);
+
+  function calcTotal() {
+    const w = +form.weight.value || 0,
+          r = +form.rate.value || 0,
+          m = +form.making.value || 0,
+          s = +form.stone.value || 0,
+          d = +form.discount.value || 0,
+          g = +form.gst.value || 0;
+    const sub = (w * r) + m + s - d;
+    const gstAmt = sub * (g / 100);
+    totalSpan.textContent = (sub + gstAmt).toFixed(2);
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Please wait...";
+
+    const obj = Object.fromEntries(new FormData(form).entries());
+    obj.total = +totalSpan.textContent;
+
+    fetch(ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify(obj)
+    })
+    .then(r => r.text())
+    .then(() => {
+      alert('Saved ✔');
+      form.reset();
+      totalSpan.textContent = '0.00';
+    })
+    .catch(err => alert('Error: ' + err))
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Save";
+    });
+  });
+</script>
+
+</body>
+</html>

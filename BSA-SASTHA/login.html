@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | Sastha Software</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e63b60, #fff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 360px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #e63b60;
+    }
+
+       h5 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #e63b60;
+    }
+
+   
+    input[type="password"] {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+select,[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #e63b60;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ff69b4;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Jewellery - Login  </h2>
+    
+    <!-- Username Dropdown -->
+    <select id="username">
+      <option value="" disabled selected>Select User</option>
+      <option value="Owner">Owner</option>
+   <option value="Salesman">Salesman</option> <!-- New user added -->
+    </select>
+
+    <!-- Password Input -->
+    <input type="password" id="password" placeholder="Enter Password" required>
+
+    <!-- Login Button -->
+    <button onclick="login()">Login</button>
+
+
+    <!-- Error Message -->
+    <div id="error" class="error"></div>
+    
+    <h5>Sastha Software | Call : (+91) 6383003056</h5>
+    
+  </div>
+
+  <script>
+    function login() {
+      const user = document.getElementById('username').value;
+      const pwd = document.getElementById('password').value.trim();
+      const errorDiv = document.getElementById('error');
+
+      if (user === 'Owner' && pwd === '123') {
+        window.location.href = 'main.html';
+      } else if (user === 'Master' && pwd === '123') {
+        window.location.href = 'maine.html';
+      } else if (user === 'Salesman' && pwd === '123') {
+        window.location.href = 'salesman.html'; // Replace with actual billing page
+      } else {
+        errorDiv.textContent = 'Invalid password for selected user!';
+      }
+    }
+  </script>
+</body>
+</html>

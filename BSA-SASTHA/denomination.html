@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cash Denomination</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #fff0f5;
+      color: #333;
+    }
+
+    .header {
+      background-color: #d63384;
+      color: white;
+      padding: 15px;
+      font-size: 22px;
+      font-weight: bold;
+      position: relative;
+      text-align: center;
+    }
+
+    .back-btn {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: white;
+      color: #d63384;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-around;
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    .summary div {
+      background: #ffe4f1;
+      padding: 10px;
+      border-radius: 12px;
+      width: 45%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      font-weight: bold;
+    }
+
+    .summary .notes { color: green; }
+    .summary .coins { color: #e76f51; }
+
+    .zero-box {
+      background: linear-gradient(to right, #ff69b4, #ff1493);
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      margin: 0 10px 15px;
+    }
+
+    .total-amount {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 10px;
+      color: #c2185b;
+    }
+
+    table {
+      width: 95%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: center;
+      border: 1px solid #f48fb1;
+    }
+
+    th {
+      background: #fce4ec;
+      color: #ad1457;
+    }
+
+    input[type="number"] {
+      width: 70px;
+      padding: 6px;
+      border: 2px solid #f48fb1;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 16px;
+      color: #d81b60;
+      background: #fffafc;
+    }
+
+    .section-title {
+      font-size: 18px;
+      margin: 5px 0 5px 20px;
+      color: #c2185b;
+      font-weight: bold;
+    }
+
+    .btns {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 10px;
+    }
+
+    .btns button {
+      width: 30%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-clear { background-color: #e53935; }
+    .btn-share { background-color: #43a047; }
+    .btn-print { background-color: #3f51b5; }
+
+    /* Print-specific styles */
+    .print-header {
+      display: none;
+    }
+
+    @media print {
+      .header, .summary, .zero-box, .btns, input[type="number"], .back-btn {
+        display: none !important;
+      }
+
+      td:nth-child(2), th:nth-child(2) {
+        display: none;
+      }
+
+      body {
+        background: white;
+      }
+
+      .print-header {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .print-header h2 {
+        color: #d63384;
+        margin: 5px 0;
+      }
+
+      .print-header p {
+        margin: 0;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .total-amount {
+        margin-top: 20px;
+        color: black;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <button class="back-btn" onclick="location.href='main.html'">&#8592; Back</button>
+    CASH DENOMINATION
+  </div>
+
+  <div class="summary">
+    <div class="notes">Notes: <span id="noteCount">0</span></div>
+    <div class="coins">Coins: <span id="coinCount">0</span></div>
+  </div>
+
+  <div class="zero-box">Zero</div>
+
+  <!-- Print Heading -->
+  <div class="print-header" id="printHeader">
+    <h2>Denomination Report</h2>
+    <p id="printDateTime">Date: --</p>
+  </div>
+
+  <div class="total-amount">
+    TOTAL AMOUNT: ₹ <span id="totalAmount">0</span>
+  </div>
+
+  <div class="section-title">Notes</div>
+  <table>
+    <thead>
+      <tr><th>CURRENCY</th><th>COUNT</th><th>AMOUNT</th></tr>
+    </thead>
+    <tbody id="notesTable">
+      <tr><td>2000X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>500X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>200X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>100X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>50X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>20X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>10X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">Coins</div>
+  <table>
+    <tbody id="coinsTable">
+      <tr><td>10X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>5X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>2X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+      <tr><td>1X</td><td><input type="number" value="0"></td><td>₹ 0</td></tr>
+    </tbody>
+  </table>
+
+  <div class="btns">
+    <button class="btn-clear" onclick="clearAll()">CLEAR ALL</button>
+    <button class="btn-share" onclick="share()">SHOW TOTAL</button>
+    <button class="btn-print" onclick="preparePrint()">PRINT PDF</button>
+  </div>
+
+  <script>
+    const noteValues = [2000, 500, 200, 100, 50, 20, 10];
+    const coinValues = [10, 5, 2, 1];
+
+    function calculate() {
+      let total = 0, noteCount = 0, coinCount = 0;
+
+      document.querySelectorAll('#notesTable tr').forEach((row, i) => {
+        const input = row.querySelector('input');
+        const value = parseInt(input.value) || 0;
+        const amount = value * noteValues[i];
+        row.cells[2].innerText = `₹ ${amount}`;
+        total += amount;
+        noteCount += value;
+      });
+
+      document.querySelectorAll('#coinsTable tr').forEach((row, i) => {
+        const input = row.querySelector('input');
+        const value = parseInt(input.value) || 0;
+        const amount = value * coinValues[i];
+        row.cells[2].innerText = `₹ ${amount}`;
+        total += amount;
+        coinCount += value;
+      });
+
+      document.getElementById('totalAmount').innerText = total;
+      document.getElementById('noteCount').innerText = noteCount;
+      document.getElementById('coinCount').innerText = coinCount;
+    }
+
+    function clearAll() {
+      document.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+      calculate();
+    }
+
+    function share() {
+      const total = document.getElementById('totalAmount').innerText;
+      alert(`Total amount: ₹${total}`);
+    }
+
+    function preparePrint() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      });
+      const timeStr = now.toLocaleTimeString('en-IN');
+      document.getElementById('printDateTime').innerText = `Date: ${dateStr}, Time: ${timeStr}`;
+      window.print();
+    }
+
+    // Auto-calculate when user types
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+      input.addEventListener('input', calculate);
+    });
+
+    calculate(); // Initial call
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Premium Module Access</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #ffe0ed, #ffffff);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .module-container {
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 105, 180, 0.3);
+      border-radius: 20px;
+      padding: 40px 30px;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      max-width: 340px;
+    }
+
+    .icon-circle {
+      background: linear-gradient(135deg, #f06292, #ec407a);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 36px;
+      animation: spin 4s linear infinite;
+      box-shadow: 0 0 15px rgba(236, 64, 122, 0.4);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .module-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .module-desc {
+      font-size: 15px;
+      color: #555;
+      margin-bottom: 24px;
+    }
+
+    .buy-btn {
+      background-color: #ec407a;
+      border: none;
+      color: white;
+      padding: 12px 26px;
+      border-radius: 30px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 14px rgba(236, 64, 122, 0.3);
+    }
+
+    .buy-btn:hover {
+      background-color: #d81b60;
+      transform: scale(1.05);
+    }
+
+    footer {
+      position: absolute;
+      bottom: 20px;
+      text-align: center;
+      width: 100%;
+      font-size: 13px;
+      color: #999;
+    }
+
+    @media (max-width: 400px) {
+      .module-container {
+        margin: 20px;
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="module-container">
+    <div class="icon-circle">💼</div>
+    <div class="module-title">Premium Module</div>
+    <div class="module-desc">Unlock this feature by purchasing access.</div>
+    <button class="buy-btn" onclick="window.location.href='info.html'">Buy Now</button>
+  </div>
+
+  <footer>
+    &copy; Powered By Sastha Software
+  </footer>
+
+</body>
+</html>

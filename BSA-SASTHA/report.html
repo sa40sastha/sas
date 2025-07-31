@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Stock Report - Sastha Software</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 30px;
+      background: #ffe6f0;
+      color: #4d0039;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #cc0066;
+    }
+
+    #loadingMessage {
+      text-align: center;
+      font-size: 18px;
+      color: #cc0066;
+      margin-bottom: 20px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .filters input, .filters select {
+      padding: 10px;
+      border: 1px solid #cc6699;
+      border-radius: 5px;
+      width: 220px;
+      background: #fff0f5;
+      color: #660033;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(204, 0, 102, 0.2);
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ffd6e8;
+      text-align: left;
+    }
+    th {
+      background-color: #ffcce0;
+      color: #660033;
+    }
+    tbody tr:hover {
+      background: #ffe6f0;
+    }
+
+    @media screen and (max-width: 768px) {
+      .filters {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .filters input, .filters select {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<button onclick="goBack()" style="padding:6px 12px; background:#cc0066; color:#fff; border:none; border-radius:5px; font-size:14px; cursor:pointer;">
+  ← Back
+</button>
+
+<div id="loadingMessage"> Please wait, loading...</div>
+
+<h2> Stock Report</h2>
+
+<div class="filters">
+  <input type="text" id="searchInput" placeholder=" Global Search" oninput="filterTable()">
+  <select id="productFilter" onchange="filterTable()">
+    <option value="">All Products</option>
+  </select>
+  <select id="metalFilter" onchange="filterTable()">
+    <option value="">All Metal Types</option>
+    <option value="Gold">Gold</option>
+    <option value="Silver">Silver</option>
+    <option value="Platinum">Platinum</option>
+  </select>
+  <select id="hsnFilter" onchange="filterTable()">
+    <option value="">All HSN Codes</option>
+  </select>
+</div>
+
+<table id="reportTable">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Product Name</th>
+      <th>Gross Wt</th>
+      <th>Wastage %</th>
+      <th>Net Wt</th>
+      <th>Qty</th>
+      <th>MC Amt</th>
+      <th>Extra Charges</th>
+      <th>HUID</th>
+      <th>Remark</th>
+      <th>HSN Code</th>
+      <th>Metal Type</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const scriptURL = 'https://script.google.com/macros/s/AKfycbywhCmxK_Tz1_kgVAz0pzitOQsx3tvQhFwB5le_bWOaWocsvNTh6iLSpe9GvaLsW0QsoQ/exec';
+let allData = [];
+
+function loadReport() {
+  document.getElementById('loadingMessage').style.display = 'block';
+  fetch(scriptURL + '?action=read')
+    .then(res => res.json())
+    .then(data => {
+      allData = data.filter(row => row.remark === "A"); // ✅ Only rows with remark = "A"
+      renderTable(allData);
+      populateFilters(allData);
+      document.getElementById('loadingMessage').style.display = 'none';
+    })
+    .catch(error => {
+      document.getElementById('loadingMessage').textContent = '❌ Failed to load data';
+    });
+}
+
+function populateFilters(data) {
+  const productSet = new Set();
+  const hsnSet = new Set();
+
+  data.forEach(row => {
+    if (row.product_name) productSet.add(row.product_name);
+    if (row.hsn_code) hsnSet.add(row.hsn_code);
+  });
+
+  const productFilter = document.getElementById('productFilter');
+  const hsnFilter = document.getElementById('hsnFilter');
+
+  [...productSet].sort().forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.text = p;
+    productFilter.appendChild(opt);
+  });
+
+  [...hsnSet].sort().forEach(h => {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.text = h;
+    hsnFilter.appendChild(opt);
+  });
+}
+
+function renderTable(data) {
+  const tbody = document.querySelector('#reportTable tbody');
+  tbody.innerHTML = '';
+
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.ID}</td>
+      <td>${row.product_name}</td>
+      <td>${row.gross_wt}</td>
+      <td>${row.wastage_percentage}</td>
+      <td>${row.net_wt}</td>
+      <td>${row.qty}</td>
+      <td>${row.labour_amt}</td>
+      <td>${row.extra_charges}</td>
+      <td>${row.pro_code}</td>
+      <td>${row.remark}</td>
+      <td>${row.hsn_code}</td>
+      <td>${row.metal_type}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const prod = document.getElementById('productFilter').value;
+  const metal = document.getElementById('metalFilter').value;
+  const hsn = document.getElementById('hsnFilter').value;
+
+  const filtered = allData.filter(row => {
+    const matchSearch = Object.values(row).join(' ').toLowerCase().includes(search);
+    const matchProd = !prod || row.product_name === prod;
+    const matchMetal = !metal || row.metal_type === metal;
+    const matchHSN = !hsn || row.hsn_code === hsn;
+    return matchSearch && matchProd && matchMetal && matchHSN;
+  });
+
+  renderTable(filtered);
+}
+
+function goBack() {
+  window.location.href = "main.html";
+}
+
+window.onload = loadReport;
+</script>
+
+</body>
+</html>
